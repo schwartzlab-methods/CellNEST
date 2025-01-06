@@ -84,6 +84,7 @@ def load_spatial_data(adata_path, positions_path):
         AnnData object with spatial information.
     """
     adata = sc.read_10x_h5(adata_path)
+    adata.var_names_make_unique()
     positions = pd.read_csv(positions_path, header=None)
     positions.columns = ["barcode", "col1", "col2", "col3", "x", "y"]
     positions.set_index("barcode", inplace=True)
