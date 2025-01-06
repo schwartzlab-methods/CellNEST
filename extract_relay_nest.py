@@ -202,22 +202,22 @@ if __name__ == "__main__":
         x=alt.X("Relay Patterns:N", axis=alt.Axis(labelAngle=45), sort='-y'),
         y='Pattern Abundance (#)'
     )
-    chart.save(output_path + 'CellNEST_' + args.data_name +'_pattern_distribution.html')
+    chart.save(output_path + 'CellNEST_' + args.data_name +'_relay_pattern_histograms.html')
     ######################### save as table format and numpy format ########
-   #data_list_pd.to_csv(output_path + args.data_name +'_top20p_topEdge'+str(args.top_edge_count)+'_relay_count.csv', index=False)
-    data_list_pd.to_csv(output_path + 'CellNEST_' + args.data_name +'_relay_count.csv', index=False)
-    with gzip.open(output_path + 'CellNEST_' + args.data_name + '_pattern_distribution_cell_info', 'wb') as fp: 
-        # This will be used during cell type finding for relays 
-	    pickle.dump(pattern_distribution_cell_info, fp)
+    #data_list_pd.to_csv(output_path + args.data_name +'_top20p_topEdge'+str(args.top_edge_count)+'_relay_count.csv', index=False)
+    data_list_pd.to_csv(output_path + 'CellNEST_' + args.data_name +'_relay_pattern_count.csv', index=False)
+    with gzip.open(output_path + 'CellNEST_' + args.data_name + '_relay_pattern_cell_info', 'wb') as fp:
+        # This will be used during cell type finding for relays
+            pickle.dump(pattern_distribution_cell_info, fp)
 
     print('Relay pattern extraction done and saved at:\n'+
-	  output_path + 'CellNEST_' + args.data_name +'_pattern_distribution.html' + '\n' +
-	  output_path + 'CellNEST_' + args.data_name +'_relay_count.csv' + '\n' + 
-	  output_path + 'CellNEST_' + args.data_name + '_pattern_distribution_cell_info'
-	  )
+          output_path + 'CellNEST_' + args.data_name +'_pattern_distribution.html' + '\n' +
+          output_path + 'CellNEST_' + args.data_name +'_relay_count.csv' + '\n' +
+          output_path + 'CellNEST_' + args.data_name + '_pattern_distribution_cell_info'
+          )
     '''
-    with gzip.open(output_path + 'CellNEST_' + args.data_name + '_pattern_distribution_cell_info', 'rb') as fp:  
-	    pattern_distribution_cell_info = pickle.load(fp)
+    with gzip.open(output_path + 'CellNEST_' + args.data_name + '_relay_pattern_cell_info', 'rb') as fp:
+            pattern_distribution_cell_info = pickle.load(fp)
 
     pattern_list = list(pattern_distribution_cell_info.keys()) 
     # see which cells are forming the first pattern
