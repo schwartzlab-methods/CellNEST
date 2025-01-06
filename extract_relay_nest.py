@@ -210,7 +210,11 @@ if __name__ == "__main__":
         # This will be used during cell type finding for relays 
 	    pickle.dump(pattern_distribution_cell_info, fp)
 
-    print('Relay pattern extraction done and saved at:\n'+'')
+    print('Relay pattern extraction done and saved at:\n'+
+	  output_path + 'CellNEST_' + args.data_name +'_pattern_distribution.html' + '\n' +
+	  output_path + 'CellNEST_' + args.data_name +'_relay_count.csv' + '\n' + 
+	  output_path + 'CellNEST_' + args.data_name + '_pattern_distribution_cell_info'
+	  )
     '''
     with gzip.open(output_path + 'CellNEST_' + args.data_name + '_pattern_distribution_cell_info', 'rb') as fp:  
 	    pattern_distribution_cell_info = pickle.load(fp)
@@ -283,9 +287,9 @@ if __name__ == "__main__":
         nt = Network( directed=True, height='1000px', width='100%') #"500px", "500px",, filter_menu=True     
         nt.from_nx(g)
         nt.save_graph(output_path + 'CellNEST_' +args.data_name +'_relay_mygraph.html')
-        print('Edge graph plot generation done')
+        print('Edge graph plot generation done and saved at: '+output_path + 'CellNEST_' +args.data_name +'_relay_mygraph.html')
         ########################################################################
         # convert it to dot file to be able to convert it to pdf or svg format for inserting into the paper
         write_dot(g, output_path + 'CellNEST_' + args.data_name + "_relay_test_interactive.dot")
-        print('dot file generation done')
+        print('dot file generation done and saved at:'+output_path + 'CellNEST_' + args.data_name + "_relay_test_interactive.dot")
 
