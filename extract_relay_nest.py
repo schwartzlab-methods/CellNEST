@@ -208,7 +208,7 @@ if __name__ == "__main__":
     data_list_pd.to_csv(output_path + 'CellNEST_' + args.data_name +'_relay_pattern_count.csv', index=False)
     with gzip.open(output_path + 'CellNEST_' + args.data_name + '_relay_pattern_cell_info', 'wb') as fp:
         # This will be used during cell type finding for relays
-            pickle.dump(pattern_distribution_cell_info, fp)
+        pickle.dump(pattern_distribution_cell_info, fp)
 
     print('Relay pattern extraction done and saved at:\n'+
           output_path + 'CellNEST_' + args.data_name +'_pattern_distribution.html' + '\n' +
