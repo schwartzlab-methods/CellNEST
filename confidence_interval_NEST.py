@@ -1,3 +1,6 @@
+# Written By
+# Deisha Paliwal
+
 print('package loading')
 import numpy as np
 import csv
