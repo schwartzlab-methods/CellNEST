@@ -80,7 +80,7 @@ if __name__ == "__main__":
         barcode_info = pickle.load(fp)    
 
     ###############################  read which spots have self loops ###############################################################
-    if args.selfloop_info_file = '':
+    if args.selfloop_info_file == '':
     	args.selfloop_info_file = args.metadata + args.data_name + '/' + args.data_name + '_self_loop_record'
         
     with gzip.open(args.selfloop_info_file, 'rb') as fp: 
