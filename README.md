@@ -97,8 +97,12 @@ This will plot the downstream average gene expression of the top 20% TF of 'CCR7
 Additionally, the following three commands will output the relay patterns, cell type identification for those, and associated confidence score:
 
 ```
-cellnest relay_extract --data_name='V1_Human_Lymph_Node_spatial' --metadata='metadata/' --top_ccc_file='output/V1_Human_Lymph_Node_spatial/V1_Human_Lymph_Node_spatial_ccc_list_top3000.csv' --output_path='relay_validation_sample_data/lymph_node/'
+cellnest relay_extract --data_name='V1_Human_Lymph_Node_spatial' --metadata='metadata/' --top_ccc_file='output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_ccc_list_top3000.csv' --output_path='relay_validation_sample_data/lymph_node/'
 ```
+![](images/pattern_histograms.png)
+
+
+
 
 ```
 cellnest relay_celltype --input_path='relay_validation_sample_data/lymph_node/' --output_path='CellNEST_figures_output/' --annotation_file='relay_validation_sample_data/lymph_node/fractional_abundances_by_spot.csv' --modality='spot'
