@@ -89,6 +89,7 @@ CellNEST also supports plotting downstream TF genes for a receptor gene, such as
 cellnest downstream --adata_path='data/V1_Human_Lymph_Node_spatial/V1_Human_Lymph_Node_filtered_feature_bc_matrix.h5' --positions_path='data/V1_Human_Lymph_Node_spatial/spatial/tissue_positions_list.csv' --gene='CCR7' 
 ```
 This will plot the downstream average gene expression of the top 20% TF of 'CCR7' and save the result at "output/downstreamGene_CCR7.html" 
+
 ![](images/downstream_gene.png)
 
 
