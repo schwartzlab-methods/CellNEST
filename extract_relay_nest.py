@@ -119,7 +119,7 @@ if __name__ == "__main__":
     # read csv_record_final
     inFile = args.top_ccc_file
     df = pd.read_csv(inFile, sep=",")
-    csv_record_final = list(df.columns) + df.values.tolist()
+    csv_record_final = [list(df.columns)] + df.values.tolist()
 
     #####################################
     component_list = dict()
