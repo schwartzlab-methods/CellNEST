@@ -47,6 +47,8 @@ then
   shift
   python plot_downstream_genes.py $@
 elif [ $1 = "confidence_interval" ] 
+then
+  shift
   python confidence_interval_NEST.py $@
 fi
 
