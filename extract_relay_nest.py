@@ -133,7 +133,7 @@ if __name__ == "__main__":
         component_list[component_label] = ''
 
     component_list[0] = ''
-    unique_component_count = max(len(component_list.keys()), id_label)
+    unique_component_count = max(len(component_list.keys()), 2)	# at least 2, 0 = no CCC, 1 = with CCC
 
     ####################### pattern finding ##########################################################################
     # make a dictionary to keep record of all the outgoing edges [to_node, ligand, receptor] for each node
