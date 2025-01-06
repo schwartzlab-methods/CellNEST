@@ -1,3 +1,6 @@
+# Written By
+# Fatema Tuz Zohora
+
 print('package loading')
 import numpy as np
 import csv
