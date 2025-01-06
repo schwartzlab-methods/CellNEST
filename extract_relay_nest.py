@@ -211,10 +211,11 @@ if __name__ == "__main__":
         pickle.dump(pattern_distribution_cell_info, fp)
 
     print('Relay pattern extraction done and saved at:\n'+
-          output_path + 'CellNEST_' + args.data_name +'_pattern_distribution.html' + '\n' +
-          output_path + 'CellNEST_' + args.data_name +'_relay_count.csv' + '\n' +
-          output_path + 'CellNEST_' + args.data_name + '_pattern_distribution_cell_info'
+          output_path + 'CellNEST_' + args.data_name +'_relay_pattern_histograms.html' + '\n' +
+          output_path + 'CellNEST_' + args.data_name +'_relay_pattern_count.csv' + '\n' +
+          output_path + 'CellNEST_' + args.data_name + '_relay_pattern_cell_info'
           )
+
     '''
     with gzip.open(output_path + 'CellNEST_' + args.data_name + '_relay_pattern_cell_info', 'rb') as fp:
             pattern_distribution_cell_info = pickle.load(fp)
