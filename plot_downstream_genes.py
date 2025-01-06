@@ -160,10 +160,14 @@ if __name__ == "__main__":
     if args.output_file == '':
         args.output_file = 'output/'+'downstreamGene_'+args.gene+'.html'
 
+    print("Reading database...")
     ppi_matrix, _ = load_data(args.ppi_path, args.tf_path)
+    print("Extracting downstream genes for the input gene...")
     top_genes = extract_downstream_genes(ppi_matrix, args.gene)
+    print("Loading spatial data...")
     adata = load_spatial_data(args.adata_path, args.positions_path)
+    print("Plotting...")
     plot_data = preprocess_adata(adata, top_genes)
     create_spatial_expression_plot(plot_data, "Mean Expression of Top 20% "+ args.gene +" Downstream Genes", args.output_file)
-   
-  
+    print("Plot saved at %s"%args.output_file)
+
