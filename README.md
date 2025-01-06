@@ -111,7 +111,7 @@ It generates following files:
 
 
 ```
-cellnest relay_celltype --input_path='output/V1_Human_Lymph_Node_spatial/' --output_path='output/V1_Human_Lymph_Node_spatial/' --annotation_file='relay_validation_sample_data/lymph_node/fractional_abundances_by_spot.csv' --modality='spot'
+cellnest relay_celltype --input_path='output/V1_Human_Lymph_Node_spatial/' --output_path='output/V1_Human_Lymph_Node_spatial/' --annotation_file='relay_validation_sample_data/lymph_node_Tcell_zone/fractional_abundances_by_spot.csv' --modality='spot'
 
 ```
 
