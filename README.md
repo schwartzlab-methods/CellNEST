@@ -82,6 +82,8 @@ cellnest output_graph_picture output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Hum
 ```
 It will generate two files: edge_graph.svg and edge_graph.pdf in the current working directory, which are easy to view and share. 
 
+## Instruction to run additional ad hoc analysis:
+
 CellNEST also supports plotting downstream TF genes for a receptor gene, such as "CCR7" for the lymph node sample using the following command:
 ```
 cellnest downstream --adata_path='data/V1_Human_Lymph_Node_spatial/V1_Human_Lymph_Node_filtered_feature_bc_matrix' --positions_path='data/V1_Human_Lymph_Node_spatial/spatial/tissue_positions_list.csv' --gene='CCR7' 
