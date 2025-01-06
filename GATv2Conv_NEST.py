@@ -1,6 +1,5 @@
 # This is the edited version of Pytorch developed script
-# By 
-# Fatema Tuz Zohora
+# by Fatema Tuz Zohora
 
  
 from typing import Optional, Tuple, Union
