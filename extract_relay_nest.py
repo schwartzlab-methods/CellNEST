@@ -74,7 +74,7 @@ if __name__ == "__main__":
     
     ##################### make cell metadata: barcode_info ###################################
     if args.barcode_info_file == '':
-        args.barcode_info_file = args.metadata + args.data_name + '/' + args.data_name + '_barcode_info_file'
+        args.barcode_info_file = args.metadata + args.data_name + '/' + args.data_name + '_barcode_info'
         
     with gzip.open(args.barcode_info_file, 'rb') as fp:     
         barcode_info = pickle.load(fp)    
