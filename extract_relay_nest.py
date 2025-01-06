@@ -65,6 +65,8 @@ if __name__ == "__main__":
     parser.add_argument( '--selfloop_info_file', type=str, default='', help='Path to load the selfloop information file produced during data preprocessing step')
     parser.add_argument( '--top_ccc_file', type=str, required = True, help='Path to load the selected top CCC file produced during data postprocessing step')
     parser.add_argument( '--output_path', type=str, default='NEST_figures_output/', help='Output file name prefix according to user\'s choice')
+    parser.add_argument( '--target_relay', type=str, default='', help='Target relay to plot according to user\'s choice. For example: ')
+    
     args = parser.parse_args()
 
 
@@ -133,7 +135,8 @@ if __name__ == "__main__":
         component_list[component_label] = ''
 
     component_list[0] = ''
-    unique_component_count = max(len(component_list.keys()), 2)	# at least 2, 0 = no CCC, 1 = with CCC
+    unique_component_count = max(max(component_list.keys()), 2)	+ 1 # at least 2, 0 = no CCC, 1 = with CCC.
+    # max(component_list.keys()) = because it will keep the colors matched with the original component plot 
 
     ####################### pattern finding ##########################################################################
     # make a dictionary to keep record of all the outgoing edges [to_node, ligand, receptor] for each node
@@ -168,8 +171,8 @@ if __name__ == "__main__":
                     pattern_distribution[lig_rec_1 + ' to ' + lig_rec_2].append(1)
                     pattern_distribution_cell_info[lig_rec_1 + ' to ' + lig_rec_2].append([barcode_info[i], barcode_info[j], barcode_info[k]]) # a_id, b_id, c_id
                     relay = lig_rec_1 + ' to ' + lig_rec_2
- #                   if relay == target_relay:
- #                       edge_list_2hop.append([record_id_1,record_id_2])
+                    if args.target_relay != "" and relay == args.target_relay:
+                        edge_list_2hop.append([record_id_1,record_id_2])
     
     
 
@@ -199,14 +202,17 @@ if __name__ == "__main__":
         x=alt.X("Relay Patterns:N", axis=alt.Axis(labelAngle=45), sort='-y'),
         y='Pattern Abundance (#)'
     )
-    chart.save(output_path + args.data_name +'_pattern_distribution.html')
+    chart.save(output_path + 'CellNEST_' + args.data_name +'_pattern_distribution.html')
     ######################### save as table format and numpy format ########
    #data_list_pd.to_csv(output_path + args.data_name +'_top20p_topEdge'+str(args.top_edge_count)+'_relay_count.csv', index=False)
-    data_list_pd.to_csv(output_path + args.data_name +'_relay_count.csv', index=False)
-    with gzip.open(output_path + args.data_name + '_pattern_distribution_cell_info', 'wb') as fp: 
+    data_list_pd.to_csv(output_path + 'CellNEST_' + args.data_name +'_relay_count.csv', index=False)
+    with gzip.open(output_path + 'CellNEST_' + args.data_name + '_pattern_distribution_cell_info', 'wb') as fp: 
+        # This will be used during cell type finding for relays 
 	    pickle.dump(pattern_distribution_cell_info, fp)
 
-    with gzip.open(output_path + args.data_name + '_pattern_distribution_cell_info', 'rb') as fp:  
+    print('Relay pattern extraction done and saved at:\n'+'')
+    '''
+    with gzip.open(output_path + 'CellNEST_' + args.data_name + '_pattern_distribution_cell_info', 'rb') as fp:  
 	    pattern_distribution_cell_info = pickle.load(fp)
 
     pattern_list = list(pattern_distribution_cell_info.keys()) 
@@ -215,7 +221,7 @@ if __name__ == "__main__":
     for group_id in range(0, len(group_list)):
         print('group: %d'%group_id)
         print(group_list[group_id])
-
+    '''
     ######################### Plotting the two hops #####################
     set1 = altairThemes.get_colour_scheme("Set1", unique_component_count)
     colors = set1
@@ -256,29 +262,30 @@ if __name__ == "__main__":
     max_score = np.max(score_list)
 
     count_edges = 0
-    for relay in edge_list_2hop:
-        print(relay)
-        for hop in range (0, len(relay)):
-            k = relay[hop] # record id for the hops
-            i = csv_record_final[k][6]
-            j = csv_record_final[k][7] 
-            print('%d %d'%(i, j))
-            ligand = csv_record_final[k][2]
-            receptor = csv_record_final[k][3]            
-            edge_score = csv_record_final[k][8]
-            edge_score = (edge_score-min_score)/(max_score-min_score)   
-            title_str =  "L:" + ligand + ", R:" + receptor+ ", "+ str(edge_score) #+
-            g.add_edge(int(i), int(j), label = title_str, color=colors_point[i], value=np.float64(edge_score)) #
-            count_edges = count_edges + 1
-
-    print("total edges plotted: %d"%count_edges)
-
-    nt = Network( directed=True, height='1000px', width='100%') #"500px", "500px",, filter_menu=True     
-    nt.from_nx(g)
-    nt.save_graph(output_path + args.data_name +'_relay_mygraph.html')
-    print('Edge graph plot generation done')
-    ########################################################################
-    # convert it to dot file to be able to convert it to pdf or svg format for inserting into the paper
-    write_dot(g, output_path + args.data_name + "_relay_test_interactive.dot")
-    print('dot file generation done')
+    if len(edge_list_2hop) > 0:
+        for relay in edge_list_2hop:
+            print(relay)
+            for hop in range (0, len(relay)):
+                k = relay[hop] # record id for the hops
+                i = csv_record_final[k][6]
+                j = csv_record_final[k][7] 
+                print('%d %d'%(i, j))
+                ligand = csv_record_final[k][2]
+                receptor = csv_record_final[k][3]            
+                edge_score = csv_record_final[k][8]
+                edge_score = (edge_score-min_score)/(max_score-min_score)   
+                title_str =  "L:" + ligand + ", R:" + receptor+ ", "+ str(edge_score) #+
+                g.add_edge(int(i), int(j), label = title_str, color=colors_point[i], value=np.float64(edge_score)) #
+                count_edges = count_edges + 1
+    
+        print("total edges plotted: %d"%count_edges)
+    
+        nt = Network( directed=True, height='1000px', width='100%') #"500px", "500px",, filter_menu=True     
+        nt.from_nx(g)
+        nt.save_graph(output_path + 'CellNEST_' +args.data_name +'_relay_mygraph.html')
+        print('Edge graph plot generation done')
+        ########################################################################
+        # convert it to dot file to be able to convert it to pdf or svg format for inserting into the paper
+        write_dot(g, output_path + 'CellNEST_' + args.data_name + "_relay_test_interactive.dot")
+        print('dot file generation done')
 
