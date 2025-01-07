@@ -97,7 +97,7 @@ This will plot the downstream average gene expression of the top 20% TF of 'CCR7
 Additionally, the following three commands will output the relay patterns, cell type identification for those, and associated confidence score:
 
 ```
-cellnest relay_extract --data_name='V1_Human_Lymph_Node_spatial' --metadata='metadata/' --top_ccc_file='output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_ccc_list_top10000.csv' --output_path='output/V1_Human_Lymph_Node_spatial/'
+cellnest relay_extract --data_name='V1_Human_Lymph_Node_spatial' --metadata='metadata/' --top_ccc_file='output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_ccc_list_top3000.csv' --output_path='output/V1_Human_Lymph_Node_spatial/'
 ```
 It generates following files: 
 1. output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_relay_pattern_histograms.html
@@ -121,7 +121,7 @@ cellnest relay_celltype --input_path='output/V1_Human_Lymph_Node_spatial/' --out
 
 The following command uses the previously generated *_relay_pattern_count.csv to find the confidence score of the corresponding relay patterns. 
 ```
-cellnest relay_confidence --input_path='output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_relay_pattern_count.csv' --output_path='output/V1_Human_Lymph_Node_spatial/relay_confidence_score_for_top10kCCC.csv' --organism='human' --database_dir='database/'
+cellnest relay_confidence --input_path='output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_relay_pattern_count.csv' --output_path='output/V1_Human_Lymph_Node_spatial/relay_confidence_score_for_top3kCCC.csv' --organism='human' --database_dir='database/'
 ```
 
 
