@@ -82,47 +82,6 @@ cellnest output_graph_picture output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Hum
 ```
 It will generate two files: edge_graph.svg and edge_graph.pdf in the current working directory, which are easy to view and share. 
 
-## Instruction to run additional ad hoc analysis:
-
-CellNEST also supports plotting downstream TF genes for a receptor gene, such as "CCR7" for the lymph node sample using the following command:
-```
-cellnest downstream --adata_path='data/V1_Human_Lymph_Node_spatial/V1_Human_Lymph_Node_filtered_feature_bc_matrix.h5' --positions_path='data/V1_Human_Lymph_Node_spatial/spatial/tissue_positions_list.csv' --gene='CCR7' 
-```
-This will plot the downstream average gene expression of the top 20% TF of 'CCR7' and save the result at "output/downstreamGene_CCR7.html" 
-
-![](images/downstream_gene.png)
-
-
-
-Additionally, the following three commands will output the relay patterns, cell type identification for those, and associated confidence score:
-
-```
-cellnest relay_extract --data_name='V1_Human_Lymph_Node_spatial' --metadata='metadata/' --top_ccc_file='output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_ccc_list_top3000.csv' --output_path='output/V1_Human_Lymph_Node_spatial/'
-```
-It generates following files: 
-1. output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_relay_pattern_histograms.html
-2. output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_relay_pattern_count.csv
-3. output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_relay_pattern_cell_info
-
-
-![](images/pattern_histograms.png)
-
-
-
-The following command uses the *_relay_pattern_count.csv and *_relay_pattern_cell_info generated in the previous step to identify the types of relay-generating cells.
-```
-cellnest relay_celltype --input_path='output/V1_Human_Lymph_Node_spatial/' --output_path='output/V1_Human_Lymph_Node_spatial/' --annotation_file='relay_validation_sample_data/lymph_node_Tcell_zone/fractional_abundances_by_spot.csv' --modality='spot'
-
-```
-![](images/celltype.png)
-
-
-
-
-The following command uses the previously generated *_relay_pattern_count.csv to find the confidence score of the corresponding relay patterns. 
-```
-cellnest relay_confidence --input_path='output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_relay_pattern_count.csv' --output_path='output/V1_Human_Lymph_Node_spatial/relay_confidence_score_for_top3kCCC.csv' --organism='human' --database_dir='database/'
-```
 
 
 ### CellNEST Interactive
