@@ -109,12 +109,13 @@ It generates following files:
 
 
 
-
+The following command uses the *_relay_pattern_count.csv and *_relay_pattern_cell_info generated in the previous step to identify the types of relay-generating cells.
 ```
 cellnest relay_celltype --input_path='output/V1_Human_Lymph_Node_spatial/' --output_path='output/V1_Human_Lymph_Node_spatial/' --annotation_file='relay_validation_sample_data/lymph_node_Tcell_zone/fractional_abundances_by_spot.csv' --modality='spot'
 
 ```
 
+The following command uses the previously generated *_relay_pattern_count.csv to find the confidence score of the corresponding relay patterns. 
 ```
 cellnest relay_confidence --input_path='output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_relay_pattern_count.csv' --output_path='output/V1_Human_Lymph_Node_spatial/relay_confidence_score_for_top10kCCC.csv' --organism='human' --database_dir='database/'
 ```
