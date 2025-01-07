@@ -116,7 +116,7 @@ cellnest relay_celltype --input_path='output/V1_Human_Lymph_Node_spatial/' --out
 ```
 
 ```
-cellnest relay_confidence --input_path='output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_relay_pattern_count.csv' --output_path='output/V1_Human_Lymph_Node_spatial/' --organism='human' --database_dir='database/'
+cellnest relay_confidence --input_path='output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_relay_pattern_count.csv' --output_path='output/V1_Human_Lymph_Node_spatial/relay_confidence_score_for_top10kCCC.csv' --organism='human' --database_dir='database/'
 ```
 
 
