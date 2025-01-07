@@ -139,7 +139,7 @@ cellnest downstream --adata_path='data/V1_Human_Lymph_Node_spatial/V1_Human_Lymp
 ```
 This will plot the downstream average gene expression of the top 20% TF of 'CCR7' and save the result at "output/downstreamGene_CCR7.html" 
 
-![](images/downstream_gene.png)
+![](../images/downstream_gene.png)
 
 
 
@@ -154,7 +154,7 @@ It generates following files:
 3. output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_relay_pattern_cell_info
 
 
-![](images/pattern_histograms.png)
+![](../images/pattern_histograms.png)
 
 
 
@@ -163,7 +163,7 @@ The following command uses the *_relay_pattern_count.csv and *_relay_pattern_cel
 cellnest relay_celltype --input_path='output/V1_Human_Lymph_Node_spatial/' --output_path='output/V1_Human_Lymph_Node_spatial/' --annotation_file='relay_validation_sample_data/lymph_node_Tcell_zone/fractional_abundances_by_spot.csv' --modality='spot'
 
 ```
-![](images/celltype.png)
+![](../images/celltype.png)
 
 
 
