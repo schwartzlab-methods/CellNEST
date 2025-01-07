@@ -114,6 +114,10 @@ The following command uses the *_relay_pattern_count.csv and *_relay_pattern_cel
 cellnest relay_celltype --input_path='output/V1_Human_Lymph_Node_spatial/' --output_path='output/V1_Human_Lymph_Node_spatial/' --annotation_file='relay_validation_sample_data/lymph_node_Tcell_zone/fractional_abundances_by_spot.csv' --modality='spot'
 
 ```
+![](images/celltype.png)
+
+
+
 
 The following command uses the previously generated *_relay_pattern_count.csv to find the confidence score of the corresponding relay patterns. 
 ```
