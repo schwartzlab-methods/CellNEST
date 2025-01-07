@@ -82,7 +82,7 @@ cellnest output_graph_picture output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Hum
 ```
 It will generate two files: edge_graph.svg and edge_graph.pdf in the current working directory, which are easy to view and share. 
 
-
+[Additional ad-hoc analysis](https://github.com/schwartzlab-methods/CellNEST/blob/main/vignette/workflow.md#instruction-to-run-additional-ad-hoc-analysis)
 
 ### CellNEST Interactive
 Finally, you can interactively visualize the cell-cell communication on tissue surface by using CellNEST Interactive: a web-based data visualization tool. The detailed instructions for running the interactive tool are provided here: https://github.com/schwartzlab-methods/cellnest-interactive
