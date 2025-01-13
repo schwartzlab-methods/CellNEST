@@ -234,7 +234,7 @@ if __name__ == "__main__":
 
     #################################### save it
     df = pd.DataFrame(csv_record_final[0:len(csv_record_final)])
-    df.to_csv(output_name + args.data_name + '_ccc_list_top'+ str(args.top_edge_count) +'.csv', index=False, header=False)
+    df.to_csv(output_name + '_ccc_list_top'+ str(args.top_edge_count) +'.csv', index=False, header=False)
   
 
     #####################################
@@ -373,8 +373,8 @@ if __name__ == "__main__":
         'Total Count': data_list['Y']
     })
   
-    data_list_pd.to_csv(output_name + args.data_name +'_histogram_byFrequency_table.csv', index=False)
-    print(output_name + args.data_name +'_histogram_byFrequency_table.csv')    
+    data_list_pd.to_csv(output_name +'_histogram_byFrequency_table.csv', index=False)
+    print(output_name +'_histogram_byFrequency_table.csv')    
 
   
     ###############################################################################################################  
@@ -403,8 +403,8 @@ if __name__ == "__main__":
             y='Total Attention Score'
         )
     
-        chart.save(output_name + args.data_name +'_histogram_byAttention_plot.html')
-        print('Saved at '+output_name + args.data_name +'_histogram_byAttention_plot.html')    
+        chart.save(output_name +'_histogram_byAttention_plot.html')
+        print('Saved at '+ output_name + '_histogram_byAttention_plot.html')    
     ############################  Network/edge graph plot ######################
 
     set1 = altairThemes.get_colour_scheme("Set1", unique_component_count)
