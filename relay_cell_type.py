@@ -1,6 +1,5 @@
 # Written By
 # Deisha Paliwal
-
 import yaml 
 import pandas as pd
 import os
@@ -144,28 +143,28 @@ def query_ctp(
 
 # create pie and bar charts from user input 
 def make_plots(
-        input_path: str,
-        output_path: str,
+        input_dir: str,
+        output_dir: str,
         annotation_file: str,
         modality: str,
         additional_network: str = None
     ):
-    os.makedirs(output_path, exist_ok = True)
-    relay_ranked = pd.read_csv(glob.glob(os.path.join(input_path, "*relay_count.csv"))[0])
+    os.makedirs(output_dir, exist_ok = True)
+    relay_ranked = pd.read_csv(glob.glob(os.path.join(input_dir, "*relay*count.csv"))[0])
     top_networks = relay_ranked.iloc[:, 0].head(5).tolist()
     if additional_network:
         top_networks.append(additional_network)
-    relay_cell_info = glob.glob(os.path.join(input_path, "*pattern_distribution_cell_info"))[0]
+    relay_cell_info = glob.glob(os.path.join(input_dir, "*pattern_cell_info"))[0]
     with gzip.open(relay_cell_info, "rb") as fp:
         relay = pickle.load(fp)
     annot_df = pd.read_csv(annotation_file, index_col = 0)
     box_plot = boxplot(relay, top_networks, annot_df, modality)
-    box_plot.save(os.path.join(output_path, "bar.html"))
+    box_plot.save(os.path.join(output_dir, "bar.html"))
     for network in top_networks:
         scrubbed_network = network.replace(" ", "_").replace('"', '')
         pie_chart, relay_proportion_df = piechart(relay, network, annot_df, modality)
-        pie_chart.save(os.path.join(output_path, f"{scrubbed_network}_pie.html"))
-        relay_proportion_df.to_csv(os.path.join(output_path, f"{scrubbed_network}_proportions.csv"))
+        pie_chart.save(os.path.join(output_dir, f"{scrubbed_network}_pie.html"))
+        relay_proportion_df.to_csv(os.path.join(output_dir, f"{scrubbed_network}_proportions.csv"))
 
 def main():
     parser = argparse.ArgumentParser(description="Visualize cell types participating in relay networks")
@@ -177,8 +176,8 @@ def main():
     args = parser.parse_args()
 
     make_plots(
-        input_path = args.input_path,
-        output_path = args.output_path,
+        input_dir = args.input_dir,
+        output_dir = args.output_dir,
         annotation_file = args.annotation_file,
         modality = args.modality,
         additional_network = args.additional_network
@@ -189,6 +188,7 @@ if __name__ == "__main__":
 
 ########## sample input ##########################
 '''
-relay_cell_type.py --input_path='relay_validation_sample_data/lymph_node/' --output_path='NEST_figures_output/' 
+relay_cell_type.py --input_dir='relay_validation_sample_data/lymph_node/' --output_dir='NEST_figures_output/' 
     --annotation_file='relay_validation_sample_data/lymph_node/fractional_abundances_by_spot.csv' --modality='spot' 
 '''
+
