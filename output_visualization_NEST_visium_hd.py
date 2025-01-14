@@ -327,7 +327,7 @@ if __name__ == "__main__":
         component_label = record[5]
         X = barcode_info[i][1]
         Y = -barcode_info[i][2]
-        opacity = np.float(record[8])
+        opacity = float(record[8])
         active_spot[i].append([pathology_label, component_label, X, Y, opacity])
         
         j = record[7]
@@ -335,7 +335,7 @@ if __name__ == "__main__":
         component_label = record[5]
         X = barcode_info[j][1]
         Y = -barcode_info[j][2]
-        opacity = np.float(record[8])   
+        opacity = float(record[8])   
         active_spot[j].append([pathology_label, component_label, X, Y, opacity])
         ''''''
         
