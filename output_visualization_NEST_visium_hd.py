@@ -141,7 +141,7 @@ if __name__ == "__main__":
     df_column_names = list(df.columns)
 #    print(df_column_names)
 
-    print(len(csv_record))
+    print("Total edges in the topN%% file is: %d"%len(csv_record))
 
     if args.top_edge_count != -1:
         csv_record_final = [df_column_names] + csv_record[0:min(args.top_edge_count, len(csv_record))]
