@@ -173,7 +173,7 @@ if __name__ == "__main__":
             
     graph = csr_matrix(connecting_edges)
     n_components, labels = connected_components(csgraph=graph,directed=True, connection = 'weak',  return_labels=True) # It assigns each SPOT to a component based on what pair it belongs to
-    print('Number of connected components %d'%n_components) 
+#    print('Number of connected components %d'%n_components) 
 
     count_points_component = np.zeros((n_components))
     for i in range (0, len(labels)):
@@ -186,7 +186,7 @@ if __name__ == "__main__":
             index_dict[i] = id_label
             id_label = id_label+1
 
-    print('Unique component count %d'%id_label)
+    print('component count %d'%id_label)
 
     for i in range (0, len(barcode_info)):
         if count_points_component[labels[i]] > 1:
