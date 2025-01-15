@@ -412,7 +412,7 @@ if __name__ == "__main__":
     df = pd.read_csv(output_name +'temp_csv.csv', sep=",")
     os.remove(output_name +'temp_csv.csv') # delete the intermediate file
 
-    print('len of loaded csv for histogram generation is %d'%len(df))
+    #print('len of loaded csv for histogram generation is %d'%len(df))
     df = preprocessDf(df)
     p = plot(df)
     outPath = output_name +'_histogram_byFrequency_plot'+ '_top' +str(args.top_edge_count) +'.html'
