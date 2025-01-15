@@ -33,8 +33,7 @@ alt.themes.enable("publishTheme")
 #current_directory = ??
 
 ##########################################################
-# preprocessDf, plot: these two functions are taken from GW's repository                                                                                                                                                                     /mnt/data0/gw/research/notta_pancreatic_cancer_visium/plots/fatema_signaling/hist.py                                                                                                                                                                                         
-
+# preprocessDf, plot: these two functions are written by GW 
 def preprocessDf(df):
   """Transform ligand and receptor columns."""
   df["ligand-receptor"] = df["ligand"] + '-' + df["receptor"]
