@@ -30,6 +30,9 @@ import copy
 import argparse
 import gc
 import os
+import altair as alt
+import altairThemes # assuming you have altairThemes.py at your current directoy or your system knows the path of this altairThemes.py.
+
 
 
 ##########################################################
