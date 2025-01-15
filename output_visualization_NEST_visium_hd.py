@@ -234,6 +234,11 @@ if __name__ == "__main__":
         
         csv_record_final_temp.append(csv_record_final[len(csv_record_final)-1])
         csv_record_final = copy.deepcopy(csv_record_final_temp)
+    #################################### save it
+    df = pd.DataFrame(csv_record_final[0:len(csv_record_final)])
+    df.to_csv(output_name + '_ccc_list_top'+ str(args.top_edge_count) +'.csv', index=False, header=False)
+    print('Component assignment done: '+output_name + '_ccc_list_top'+ str(args.top_edge_count) +'.csv')
+
                     
 
     #####################################
@@ -397,23 +402,53 @@ if __name__ == "__main__":
         tooltip=['component_label'] #,'opacity'
     )
 
-    chart.save(output_name +'_component_plot.html')
-    print('Altair plot generation done')
+    chart.save(output_name +'_component_plot'+ '_top' +str(args.top_edge_count) +'.html')
+    print('Altair plot generation done:'+output_name +'_component_plot'+ '_top' +str(args.top_edge_count) +'.html')
 
     ###################################  Histogram plotting #################################################################################
 
     df = pd.DataFrame(csv_record_final)
-    df.to_csv('temp_csv.csv', index=False, header=False)
-    df = pd.read_csv('temp_csv.csv', sep=",")
-    os.remove('temp_csv.csv') # delete the intermediate file
+    df.to_csv(output_name +'temp_csv.csv', index=False, header=False)
+    df = pd.read_csv(output_name +'temp_csv.csv', sep=",")
+    os.remove(output_name +'temp_csv.csv') # delete the intermediate file
 
     print('len of loaded csv for histogram generation is %d'%len(df))
     df = preprocessDf(df)
     p = plot(df)
-    outPath = output_name +'_histogram_test.html'
+    outPath = output_name +'_histogram_byFrequency_plot'+ '_top' +str(args.top_edge_count) +'.html'
     p.save(outPath)	
-    print('Histogram plot generation done')
+    print('Histogram plot generation done:'+output_name +'_histogram_byFrequency_plot'+ '_top' +str(args.top_edge_count) +'.html')
+    ################################# Save the histograms in a table format ########################################
 
+    hist_count = defaultdict(list)
+    for i in range (1, len(csv_record_final)-1):    
+        hist_count[csv_record_final[i][2]+'-'+csv_record_final[i][3]].append(1)
+
+    lr_pair_count = []
+    for lr_pair in hist_count.keys():
+        hist_count[lr_pair] = np.sum(hist_count[lr_pair])
+        lr_pair_count.append([lr_pair, hist_count[lr_pair]])
+
+    # sort it in high to low order
+    lr_pair_count = sorted(lr_pair_count, key = lambda x: x[1], reverse=True)
+  
+    # now plot the histograms where X axis will show the name or LR pair and Y axis will show the score.
+    data_list=dict()
+    data_list['X']=[]
+    data_list['Y']=[] 
+    for i in range (0, len(lr_pair_count)):
+        data_list['X'].append(lr_pair_count[i][0])
+        data_list['Y'].append(lr_pair_count[i][1])
+        
+    data_list_pd = pd.DataFrame({
+        'Ligand-Receptor Pairs': data_list['X'],
+        'Total Count': data_list['Y']
+    })
+  
+    data_list_pd.to_csv(output_name +'_histogram_byFrequency_table'+ '_top' +str(args.top_edge_count) +'.csv', index=False)
+    print(output_name +'_histogram_byFrequency_table'+ '_top' +str(args.top_edge_count) +'.csv')    
+
+  
     ############################  Network/edge graph plot ######################
 
     set1 = altairThemes.get_colour_scheme("Set1", unique_component_count)
@@ -478,15 +513,15 @@ if __name__ == "__main__":
     print("total edges plotted: %d"%count_edges)
     nt = Network( directed=True, height='1000px', width='100%') #"500px", "500px",, filter_menu=True     
     nt.from_nx(g)
-    nt.save_graph(output_name +'_mygraph.html')
-    print('Edge graph plot generation done')
+    nt.save_graph(output_name +'_mygraph'+ '_top' +str(args.top_edge_count) +'.html')
+    print('Edge graph plot generation done:'+output_name +'_mygraph'+ '_top' +str(args.top_edge_count) +'.html')
     ########################################################################
     # convert it to dot file to be able to convert it to pdf or svg format for inserting into the paper
-    write_dot(g, output_name + "_test_interactive.dot")
-    print('dot file generation done')
+    write_dot(g, output_name + '_test_interactive'+ '_top' +str(args.top_edge_count) +'.dot')
+    print('dot file generation done: '+output_name + '_test_interactive'+ '_top' +str(args.top_edge_count) +'.dot')
     print('All done')
     ############################ or Relay plot ########################################
-
+    '''
     count_edges = 0
     for relay in edge_list_2hop:
         print(relay)
@@ -515,3 +550,4 @@ if __name__ == "__main__":
     write_dot(g, output_name + "_relay_test_interactive.dot")
     print('dot file generation done')
     print('All done')
+    '''
