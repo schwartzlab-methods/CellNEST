@@ -82,7 +82,6 @@ if __name__ == "__main__":
 
     if args.output_path=='output/': # if default one is used, then concatenate the dataname. Otherwise, use the user provided path directly
         args.output_path = args.output_path + args.data_name + '/'
-    print('Top %d communications will be plot. To change the count use --top_edge_count parameter'%args.top_edge_count)
 
     if args.output_name=='':
         output_name = args.output_path + args.model_name
@@ -142,6 +141,7 @@ if __name__ == "__main__":
 #    print(df_column_names)
 
     print("Total edges in the topN%% file is: %d"%len(csv_record))
+    print('Top %d communications will be plot. To change the count use --top_edge_count parameter'%args.top_edge_count)
 
     if args.top_edge_count != -1:
         csv_record_final = [df_column_names] + csv_record[0:min(args.top_edge_count, len(csv_record))]
