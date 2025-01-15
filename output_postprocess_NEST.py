@@ -47,7 +47,6 @@ if __name__ == "__main__":
     parser.add_argument( '--top_percent', type=int, default=20, help='Top N percentage communications to pick')
     parser.add_argument( '--cutoff_MAD', type=int, default=-1, help='Set it to 1 to filter out communications having deviation higher than MAD')
     parser.add_argument( '--cutoff_z_score', type=float, default=-1, help='Set it to 1 to filter out communications having z_score less than 1.97 value')
-    parser.add_argument( '--cutoff_z_score', type=float, default=-1, help='Set it to 1 to filter out communications having z_score less than 1.97 value')
     parser.add_argument( '--output_all', type=int, default=-1, help='Set it to 1 to output all communications')
     args = parser.parse_args()
 
