@@ -352,7 +352,7 @@ if __name__ == "__main__":
                     for k in range (0, len(atn_score_list)):
                         if attention_scores[split_i][split_j][k] >= threshold_down and attention_scores[split_i][split_j][k] <= threshold_up: 
                             if barcode_info[i][3]==0:
-                                print('error')
+                                print('edge not found')
                             elif barcode_info[i][3]==1:
                                 csv_record.append([barcode_info[i][0], barcode_info[j][0], lig_rec_dict[i][j][k][0], lig_rec_dict[i][j][k][1], min_attention_score + attention_scores[split_i][split_j][k], '0-single', i, j])
                             else:
@@ -406,7 +406,7 @@ if __name__ == "__main__":
         all_edge_vs_rank = []
         for key_val in edge_rank_dictionary.keys():
             rank_product = 1
-            attention_score_list = csv_record_dict[key_value] # [[score, run_id],...]
+            attention_score_list = csv_record_dict[key_val] # [[score, run_id],...]
             avg_score = 0 #[]
             total_weight = 0
             for i in range (0, len(edge_rank_dictionary[key_val])):
