@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     parser.add_argument( '--data_name', type=str, default='V1_Human_Lymph_Node_spatial_intra', help='The name of dataset') #, required=True) # default='PDAC_64630',
     parser.add_argument( '--model_name', type=str, default='NEST_V1_Human_Lymph_Node_spatial_intra', help='Name of the trained model')  #, required=True)
-    parser.add_argument( '--total_runs', type=int, '4', help='How many runs for ensemble (at least 2 are preferred)') #, required=True)
+    parser.add_argument( '--total_runs', type=int, default=4, help='How many runs for ensemble (at least 2 are preferred)') #, required=True)
     #######################################################################################################
     parser.add_argument( '--embedding_path', type=str, default='embedding_data/', help='Path to grab the attention scores from')
     parser.add_argument( '--metadata_from', type=str, default='metadata/', help='Path to grab the metadata') 
@@ -280,15 +280,17 @@ if __name__ == "__main__":
             total_weight = 0
             for i in range (0, len(edge_rank_dictionary[key_val])):
                 rank_product = rank_product * edge_rank_dictionary[key_val][i]
-                score_product = score_product * attention_score_list[i][0]
+                score_product = score_product * (attention_score_list[i][0]+0.01) 
+                # translated by a tiny amount to avoid producing 0 during product 
                 weight_by_run = max_weight - edge_rank_dictionary[key_val][i]
                 avg_score = avg_score + attention_score_list[i][0] * weight_by_run
                 total_weight = total_weight + weight_by_run
                 
             avg_score = avg_score/total_weight # lower weight being higher attention np.max(avg_score) #
-            all_edge_vs_rank.append([key_val, rank_product**(1/total_runs), avg_score])  # small rank being high attention
+            all_edge_vs_rank.append([key_val, rank_product**(1/total_runs), score_product**(1/total_runs)])  # small rank being high attention
+            # or all_edge_vs_rank.append([key_val, rank_product**(1/total_runs), avg_score])
             distribution_rank[layer].append(rank_product**(1/total_runs))
-            distribution_score[layer].append(avg_score) #score_product**(1/total_runs))
+            distribution_score[layer].append(score_product**(1/total_runs)) #avg_score)
 
         all_edge_sorted_by_rank[layer] = sorted(all_edge_vs_rank, key = lambda x: x[1]) # small rank being high attention 
         #print('rank ranges from %g to %g'%(np.min(distribution_rank[layer]), np.max(distribution_rank[layer])))
@@ -308,6 +310,7 @@ if __name__ == "__main__":
         #b = len(all_edge_sorted_by_rank[layer])
         #print('b %d'%b)
         for i in range (0, len(all_edge_sorted_by_rank[layer])):
+            # score is scaled between 0 to 1 again for easier interpretation 
             all_edge_sorted_by_rank[layer][i][2] = (all_edge_sorted_by_rank[layer][i][2]-score_min)/(score_max-score_min)
             all_edge_sorted_by_rank[layer][i][1] = i+1 # done for easier interpretation
             #((all_edge_sorted_by_rank[layer][i][1]-rank_min)/(rank_max-rank_min))*(b-a) + a
@@ -382,13 +385,13 @@ if __name__ == "__main__":
         threshold_up = np.percentile(distribution_rank[layer], percentage_value) #np.round(np.percentile(distribution_rank[layer], percentage_value),2)
         for i in range (0, len(all_edge_sorted_by_rank[layer])):
             if all_edge_sorted_by_rank[layer][i][1] <= threshold_up: # because, lower rank means higher strength
-                csv_record_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][1]) # already sorted by rank. so just use i as the rank 
+                csv_record_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][1]) # rank 
                 edge_score_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][2]) # score
     ###########################################################################################################################################
     ## get the aggregated rank for all the edges ##
     distribution_temp = []
     for key_value in csv_record_intersect_dict.keys():  
-        arg_index = np.argmin(csv_record_intersect_dict[key_value]) # layer 0 or 1, whose rank to use # should I take the avg rank instead, and scale the ranks (1 to count(total_edges)) later? 
+        arg_index = np.argmin(csv_record_intersect_dict[key_value]) # layer 0 or 1, whose rank to use  
         csv_record_intersect_dict[key_value] = np.min(csv_record_intersect_dict[key_value]) # use that rank. smaller rank being the higher attention
         edge_score_intersect_dict[key_value] = edge_score_intersect_dict[key_value][arg_index] # use that score
         distribution_temp.append(csv_record_intersect_dict[key_value]) 
@@ -417,8 +420,12 @@ if __name__ == "__main__":
             
 #    print('common LR count %d'%len(csv_record))
     
-
-    df = pd.DataFrame(score_distribution)    
+    data_list=dict()
+    data_list['attention_score']=[]
+    for score in score_distribution:
+        data_list['attention_score'].append(score)
+        
+    df = pd.DataFrame(data_list)    
     chart = alt.Chart(df).transform_density(
             'attention_score',
             as_=['attention_score', 'density'],
