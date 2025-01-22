@@ -198,13 +198,15 @@ if __name__ == "__main__":
     total_runs = args.total_runs 
     start_index = 0 
     distribution_rank = []
+    distribution_score = []
     all_edge_sorted_by_rank = []
     for layer in range (0, 2):
         distribution_rank.append([])
+        distribution_score.append([])
         all_edge_sorted_by_rank.append([])
     
     layer = -1
-    for l in [2, 3]: #, 3]: # 2 = layer 2, 3 = layer 1 
+    for l in [3, 2]: #, 3]: # 2 = layer 2, 3 = layer 1 
         layer = layer + 1
         print('layer %d'%layer)
         csv_record_dict = defaultdict(list)
@@ -270,7 +272,7 @@ if __name__ == "__main__":
             max_value = np.max(distribution)
             min_value = np.min(distribution)
             distribution = []
-            
+            print('attention score is between %g to %g, total edges %d'%(np.min(distribution), np.max(distribution), len(distribution)))
             for i in range (0, datapoint_size):
                 for j in range (0, datapoint_size):
                     for k in range (0, len(attention_scores[i][j])):
@@ -280,14 +282,9 @@ if __name__ == "__main__":
                             min_attention_score = scaled_score
                             
                         distribution.append(scaled_score)
-                        
-                
-            if min_attention_score<0:
-                min_attention_score = -min_attention_score
-            else: 
-                min_attention_score = 0
-            
-            print('min attention score %g, total edges %d'%(min_attention_score, len(distribution)))
+
+            print('attention score is scaled between %g to %g for ensemble'%(np.min(distribution), np.max(distribution)))
+            #print('min attention score %g, total edges %d'%(min_attention_score, len(distribution)))
             ccc_index_dict = dict()
             threshold_down =  np.percentile(sorted(distribution), 0)
             threshold_up =  np.percentile(sorted(distribution), 100)
@@ -354,9 +351,9 @@ if __name__ == "__main__":
                             if barcode_info[i][3]==0:
                                 print('edge not found')
                             elif barcode_info[i][3]==1:
-                                csv_record.append([barcode_info[i][0], barcode_info[j][0], lig_rec_dict[i][j][k][0], lig_rec_dict[i][j][k][1], min_attention_score + attention_scores[split_i][split_j][k], '0-single', i, j])
+                                csv_record.append([barcode_info[i][0], barcode_info[j][0], lig_rec_dict[i][j][k][0], lig_rec_dict[i][j][k][1], attention_scores[split_i][split_j][k], '0-single', i, j])
                             else:
-                                csv_record.append([barcode_info[i][0], barcode_info[j][0], lig_rec_dict[i][j][k][0], lig_rec_dict[i][j][k][1], min_attention_score + attention_scores[split_i][split_j][k], barcode_info[i][3], i, j])
+                                csv_record.append([barcode_info[i][0], barcode_info[j][0], lig_rec_dict[i][j][k][0], lig_rec_dict[i][j][k][1], attention_scores[split_i][split_j][k], barcode_info[i][3], i, j])
      
             ###########	
           
@@ -406,25 +403,47 @@ if __name__ == "__main__":
         all_edge_vs_rank = []
         for key_val in edge_rank_dictionary.keys():
             rank_product = 1
+            score_product = 1
             attention_score_list = csv_record_dict[key_val] # [[score, run_id],...]
             avg_score = 0 #[]
             total_weight = 0
             for i in range (0, len(edge_rank_dictionary[key_val])):
                 rank_product = rank_product * edge_rank_dictionary[key_val][i]
+                score_product = score_product * (attention_score_list[i][0]+0.01) 
+                # translated by a tiny amount to avoid producing 0 during product                
                 weight_by_run = max_weight - edge_rank_dictionary[key_val][i]
                 avg_score = avg_score + attention_score_list[i][0] * weight_by_run
                 #avg_score.append(attention_score_list[i][0])  
                 total_weight = total_weight + weight_by_run
                 
             avg_score = avg_score/total_weight # lower weight being higher attention np.max(avg_score) #
-            all_edge_vs_rank.append([key_val, rank_product**(1/total_runs), avg_score])  # small rank being high attention
+            all_edge_vs_rank.append([key_val, rank_product**(1/total_runs), score_product**(1/total_runs)]) #avg_score 
+            # small rank being high attention
             distribution_rank[layer].append(rank_product**(1/total_runs))
+            distribution_score[layer].append(score_product**(1/total_runs)) #avg_score)
             
         all_edge_sorted_by_rank[layer] = sorted(all_edge_vs_rank, key = lambda x: x[1]) # small rank being high attention 
     
     #############################################################################################################################################
-    # for each layer, should I scale the attention scores [0, 1] over all the edges? So that they are comparable or mergeable between layers?
-    ################################ or ###############################################################################################################
+    # for each layer, I scale the attention scores [0, 1] over all the edges. So that they are comparable or mergeable between layers
+    # for each edge, we have two sets of (rank, score) due to 2 layers. We take union of them.
+    print('Multiple runs for each layer are ensembled.') 
+    for layer in range (0, 2):
+        score_min = np.min(distribution_score[layer])
+        score_max = np.max(distribution_score[layer])
+        rank_min = np.min(distribution_rank[layer])
+        rank_max = np.max(distribution_rank[layer])
+        distribution_rank[layer] = []
+        distribution_score[layer] = []
+        for i in range (0, len(all_edge_sorted_by_rank[layer])):
+            # score is scaled between 0 to 1 again for easier interpretation 
+            all_edge_sorted_by_rank[layer][i][2] = (all_edge_sorted_by_rank[layer][i][2]-score_min)/(score_max-score_min)
+            all_edge_sorted_by_rank[layer][i][1] = i+1 # done for easier interpretation
+            #((all_edge_sorted_by_rank[layer][i][1]-rank_min)/(rank_max-rank_min))*(b-a) + a
+            distribution_rank[layer].append(all_edge_sorted_by_rank[layer][i][1])
+            distribution_score[layer].append(all_edge_sorted_by_rank[layer][i][2])
+    
+    ################################ now take the cut-off ###############################################################################################################
     percentage_value = args.top_percent #20 ##100 #20 # top 20th percentile rank, low rank means higher attention score
     csv_record_intersect_dict = defaultdict(list)
     edge_score_intersect_dict = defaultdict(list)
@@ -432,13 +451,13 @@ if __name__ == "__main__":
         threshold_up = np.percentile(distribution_rank[layer], percentage_value) #np.round(np.percentile(distribution_rank[layer], percentage_value),2)
         for i in range (0, len(all_edge_sorted_by_rank[layer])):
             if all_edge_sorted_by_rank[layer][i][1] <= threshold_up: # because, lower rank means higher strength
-                csv_record_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(i+1) # already sorted by rank. so just use i as the rank 
+                csv_record_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][1]) # rank
                 edge_score_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][2]) # score
     ###########################################################################################################################################
     ## get the aggregated rank for all the edges ##
     distribution_temp = []
     for key_value in csv_record_intersect_dict.keys():  
-        arg_index = np.argmin(csv_record_intersect_dict[key_value]) # layer 0 or 1, whose rank to use # should I take the avg rank instead, and scale the ranks (1 to count(total_edges)) later? 
+        arg_index = np.argmin(csv_record_intersect_dict[key_value]) # layer 0 or 1, whose rank to use 
         csv_record_intersect_dict[key_value] = np.min(csv_record_intersect_dict[key_value]) # use that rank. smaller rank being the higher attention
         edge_score_intersect_dict[key_value] = edge_score_intersect_dict[key_value][arg_index] # use that score
         distribution_temp.append(csv_record_intersect_dict[key_value]) 
@@ -447,7 +466,6 @@ if __name__ == "__main__":
     
     ################################################################################
     csv_record_dict = copy.deepcopy(csv_record_intersect_dict)
-    combined_score_distribution = []
     csv_record = []
     csv_record.append(['from_cell', 'to_cell', 'ligand', 'receptor', 'edge_rank', 'component', 'from_id', 'to_id', 'attention_score'])
     for key_value in csv_record_dict.keys():
@@ -460,24 +478,12 @@ if __name__ == "__main__":
         score = edge_score_intersect_dict[key_value] # weighted average attention score, where weight is the rank, lower rank being higher attention score
         label = -1 
         csv_record.append([barcode_info[i][0], barcode_info[j][0], ligand, receptor, edge_rank, label, i, j, score])
-        combined_score_distribution.append(score)
-    
-            
+
+ 
     print('common LR count %d'%len(csv_record))
     
-    ##### scale the attention scores from 0 to 1 : high score representing higher attention ########
-    score_distribution = []
-    for k in range (1, len(csv_record)):
-        score_distribution.append(csv_record[k][8])
-    
-    min_score = np.min(score_distribution)
-    max_score = np.max(score_distribution)
-    for k in range (1, len(csv_record)):
-        scaled_score = (csv_record[k][8]-min_score)/(max_score-min_score) 
-        csv_record[k][8] = scaled_score
-    
-    
     ##### save the file for downstream analysis ########
+    ##### you can do additional filtering here if needed. None is done for now ############
     csv_record_final = []
     csv_record_final.append(csv_record[0])
     for k in range (1, len(csv_record)):
@@ -485,11 +491,9 @@ if __name__ == "__main__":
         receptor = csv_record[k][3]
         #if ligand =='CCL19' and receptor == 'CCR7':
         csv_record_final.append(csv_record[k])
-    
-    
-    
+
         
     df = pd.DataFrame(csv_record_final) # output 4
     df.to_csv(args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv', index=False, header=False)
-    
+    print('Result saved: '+args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv')
 
