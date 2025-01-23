@@ -359,7 +359,7 @@ if __name__ == "__main__":
           
             print('records found %d'%len(csv_record))
             for i in range (1, len(csv_record)): 
-                key_value = str(csv_record[i][6]) +'-'+ str(csv_record[i][7]) + '-' + csv_record[i][2] + '-' + csv_record[i][3]
+                key_value = str(csv_record[i][6]) +'+'+ str(csv_record[i][7]) + '+' + csv_record[i][2] + '+' + csv_record[i][3]
                 csv_record_dict[key_value].append([csv_record[i][4], run])
 
             ##### one run completes #####
@@ -469,7 +469,7 @@ if __name__ == "__main__":
     csv_record = []
     csv_record.append(['from_cell', 'to_cell', 'ligand', 'receptor', 'edge_rank', 'component', 'from_id', 'to_id', 'attention_score'])
     for key_value in csv_record_dict.keys():
-        item = key_value.split('-')
+        item = key_value.split('+')
         i = int(item[0])
         j = int(item[1])
         ligand = item[2]
