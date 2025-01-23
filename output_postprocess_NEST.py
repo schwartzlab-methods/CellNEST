@@ -8,6 +8,7 @@ import csv
 import pickle
 import statistics
 from scipy import sparse
+from scipy import stats
 import scipy.io as sio
 import scanpy as sc 
 import matplotlib
@@ -317,7 +318,7 @@ if __name__ == "__main__":
             distribution_rank[layer].append(all_edge_sorted_by_rank[layer][i][1])
             distribution_score[layer].append(all_edge_sorted_by_rank[layer][i][2])
     
-    ################################ or ###############################################################################################################
+    ################################ Just output top 20% edges ###############################################################################################################
     if args.cutoff_MAD ==-1 and args.cutoff_z_score == -1:
         percentage_value = args.top_percent #20 ##100 #20 # top 20th percentile rank, low rank means higher attention score
         csv_record_intersect_dict = defaultdict(list)
@@ -437,7 +438,7 @@ if __name__ == "__main__":
     chart.save(args.output_path + args.model_name+'_attention_score_distribution.html')  
     print(args.output_path + args.model_name+'_attention_score_distribution.html')
     skewness_distribution = skew(score_distribution)
-    
+    print('skewness of the distribution is %g'%skewness_distribution)
     if args.output_all == 1:
         df = pd.DataFrame(csv_record) # 
         df.to_csv(args.output_path + args.model_name+'_allCCC.csv', index=False, header=False)
@@ -445,6 +446,7 @@ if __name__ == "__main__":
     ###########
     if args.cutoff_MAD !=-1:
         MAD = median_abs_deviation(score_distribution)
+        print("MAD is %g"%MAD)
         median_distribution = statistics.median(score_distribution)
         csv_record_final = []
         csv_record_final.append(csv_record[0])
@@ -459,7 +461,7 @@ if __name__ == "__main__":
     
         df = pd.DataFrame(csv_record_final) # 
         df.to_csv(args.output_path + args.model_name+'_MAD_cutoff.csv', index=False, header=False)
-        
+        print(args.output_path + args.model_name+'_MAD_cutoff.csv')
     ##### save the file for downstream analysis ########
     if args.cutoff_z_score !=-1:
         z_score_distribution = stats.zscore(score_distribution)
@@ -474,7 +476,7 @@ if __name__ == "__main__":
     
         df = pd.DataFrame(csv_record_final) # output 4
         df.to_csv(args.output_path + args.model_name+'_z_score_cutoff.csv', index=False, header=False)
-        
+        print(args.output_path + args.model_name+'_z_score_cutoff.csv')
     ###########################################################################################################################################
     
     # plot the distribution    
