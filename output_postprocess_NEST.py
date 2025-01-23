@@ -38,9 +38,9 @@ import altairThemes # assuming you have altairThemes.py at your current directoy
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument( '--data_name', type=str, default='V1_Human_Lymph_Node_spatial_intra', help='The name of dataset') #, required=True) # default='PDAC_64630',
-    parser.add_argument( '--model_name', type=str, default='NEST_V1_Human_Lymph_Node_spatial_intra', help='Name of the trained model')  #, required=True)
-    parser.add_argument( '--total_runs', type=int, default=4, help='How many runs for ensemble (at least 2 are preferred)') #, required=True)
+    parser.add_argument( '--data_name', type=str, default='V1_Human_Lymph_Node_spatial', help='The name of dataset', required=True) # default='PDAC_64630',
+    parser.add_argument( '--model_name', type=str, default='NEST_V1_Human_Lymph_Node_spatial', help='Name of the trained model', required=True)
+    parser.add_argument( '--total_runs', type=int, default=5, help='How many runs for ensemble (at least 2 are preferred)', required=True)
     #######################################################################################################
     parser.add_argument( '--embedding_path', type=str, default='embedding_data/', help='Path to grab the attention scores from')
     parser.add_argument( '--metadata_from', type=str, default='metadata/', help='Path to grab the metadata') 
