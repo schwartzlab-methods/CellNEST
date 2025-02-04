@@ -147,7 +147,7 @@ if __name__ == "__main__":
         alt.X('X', scale=alt.Scale(zero=False)),
         alt.Y('Y', scale=alt.Scale(zero=False)),
     )
-    chart.save('/cluster/home/t116508uhn/' + args.data_name +'_tissue_altair_plot.html')
+    chart.save(args.data_to + args.data_name +'_tissue_altair_plot.html')
     print('Altair plot generation done')    
     '''
     ################################################
@@ -324,8 +324,8 @@ if __name__ == "__main__":
             alt.X('X', scale=alt.Scale(zero=False)),
             alt.Y('Y', scale=alt.Scale(zero=False)),
         )
-        chart.save('/cluster/home/t116508uhn/' + args.data_name +'_tissue_altair_plot_ROI.html')
-        print('Altair plot generation done: '+'/cluster/home/t116508uhn/' + args.data_name +'_tissue_altair_plot_ROI.html')    
+        chart.save(data_to + args.data_name +'_tissue_altair_plot_ROI.html')
+        print('Altair plot generation done: '+ args.data_to + args.data_name +'_tissue_altair_plot_ROI.html')    
         
         
     ##############################################################################
@@ -536,4 +536,4 @@ if __name__ == "__main__":
     print('preprocess time in seconds: ', (end_time-start_time).seconds)
 
     
-# nohup python -u data_preprocess_NEST.py --data_name='PDAC_64630_mincell3_th98p5' --data_from='/cluster/projects/schwartzgroup/fatema/pancreatic_cancer_visium/210827_A00827_0396_BHJLJTDRXY_Notta_Karen/V10M25-61_D1_PDA_64630_Pa_P_Spatial10x_new/outs/' --filter_min_cell=3 --threshold_gene_exp=98.5 > output_data_preprocess_PDAC_64630_min_cell_3_th98p5.log &
+# nohup python -u data_preprocess_NEST.py --data_name='PDAC_64630_mincell3_th98p5' --data_from='outs/' --filter_min_cell=3 --threshold_gene_exp=98.5 > output_data_preprocess.log &
