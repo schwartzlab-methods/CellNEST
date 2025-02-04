@@ -17,20 +17,22 @@ import os
 import scanpy as sc
 import anndata
 #import altair as alt
+import datetime
 
 print('user input reading')
 #current_dir = 
 if __name__ == "__main__":
+    start_time = datetime.datetime.now()
     parser = argparse.ArgumentParser()
     ################## Mandatory ####################################################################
     parser.add_argument( '--data_name', type=str, help='Name of the dataset', default="Visium_HD_Human_Colon_Cancer_square_002um_outputs_full")  
-    parser.add_argument( '--data_from', type=str, default='/cluster/projects/schwartzgroup/fatema/NEST/data/segmented_visium_hd_CRC/', help='Path to the dataset to read from. Space Ranger outs/ folder is preferred. Otherwise, provide the *.mtx file of the gene expression matrix.')
+    parser.add_argument( '--data_from', type=str, default='data/segmented_visium_hd_CRC/', help='Path to the dataset to read from. Space Ranger outs/ folder is preferred. Otherwise, provide the *.mtx file of the gene expression matrix.')
     ################# default is set ################################################################
     parser.add_argument( '--data_to', type=str, default='input_graph/', help='Path to save the input graph (to be passed to GAT)')
     parser.add_argument( '--metadata_to', type=str, default='metadata/', help='Path to save the metadata')
     parser.add_argument( '--filter_min_cell', type=int, default=1000 , help='Minimum number of cells for gene filtering') 
     parser.add_argument( '--threshold_gene_exp', type=float, default=98.5, help='Threshold percentile for gene expression. Genes above this percentile are considered active.')
-    parser.add_argument( '--tissue_position_file', type=str, default='/cluster/projects/schwartzgroup/fatema/data/Visium_HD_Human_Colon_Cancer_square_002um_outputs/spatial/tissue_positions.parquet', help='If your --data_from argument points to a *.mtx file instead of Space Ranger, then please provide the path to tissue position file.')
+    parser.add_argument( '--tissue_position_file', type=str, default='data/Visium_HD_Human_Colon_Cancer_square_002um_outputs/spatial/tissue_positions.parquet', help='If your --data_from argument points to a *.mtx file instead of Space Ranger, then please provide the path to tissue position file.')
     parser.add_argument( '--spot_diameter', type=float, default=37.04, help='Spot/cell diameter for filtering ligand-receptor pairs based on cell-cell contact information. Should be provided in the same unit as spatia data (for Visium, that is pixel).')
     parser.add_argument( '--split', type=int, default=1, help='Will you apply split options. Set 1 if yes.') 
     parser.add_argument( '--distance_measure', type=str, default='knn' , help='Set neighborhood cutoff criteria')
@@ -173,7 +175,7 @@ if __name__ == "__main__":
     
     # assign weight to the neighborhood relations based on neighborhood distance ################
     print('Assign weight to the neighborhood relations based on neighborhood distance. This is a time consuming step.')
-    '''
+    
     dist_X = np.zeros((distance_matrix.shape[0], distance_matrix.shape[1]))
     for j in range(0, distance_matrix.shape[1]): # look at all the incoming edges to node 'j'
         max_value=np.max(distance_matrix[:,j]) # max distance of node 'j' to all it's neighbors (incoming)
@@ -202,10 +204,10 @@ if __name__ == "__main__":
     print('dist_X_list length is %d'%len(dist_X_list)) #len is 595,460
     #with gzip.open(args.metadata_to + args.data_name + '_distance_weight', 'wb') as fp:  
     #    pickle.dump(dist_X_list, fp)
-    '''
+    
     #############################################################################################
-    with gzip.open('metadata/Visium_HD_Human_Colon_Cancer_square_002um_outputs/Visium_HD_Human_Colon_Cancer_square_002um_outputs_distance_weight', 'rb') as fp:  
-        dist_X_list = pickle.load(fp)    
+    #with gzip.open('metadata/Visium_HD_Human_Colon_Cancer_square_002um_outputs/Visium_HD_Human_Colon_Cancer_square_002um_outputs_distance_weight', 'rb') as fp:  
+    #    dist_X_list = pickle.load(fp)    
 
     dist_X_dict = defaultdict(dict)
     for k in range (0, len(dist_X_list)):
@@ -289,8 +291,14 @@ if __name__ == "__main__":
     cell_percentile = []
     for i in range (0, cell_vs_gene.shape[0]):
         y = sorted(cell_vs_gene[i]) # sort each row/cell in ascending order of gene expressions
-        cell_percentile.append(np.percentile(y, args.threshold_gene_exp)) 
-    
+        ## inter ##
+        active_cutoff = np.percentile(y, args.threshold_gene_exp)
+        if active_cutoff == min(cell_vs_gene[i][:]):
+            active_cutoff = max(cell_vs_gene[i][:])
+            #all_deactive_count = all_deactive_count + 1
+        cell_percentile.append(active_cutoff) 
+
+   
     ##############################################################################
     active_nodes = dict()
     if args.ROI == 1:
@@ -524,5 +532,8 @@ if __name__ == "__main__":
         
     print('write data done')
     
+    end_time = datetime.datetime.now()
+    print('preprocess time in seconds: ', (end_time-start_time).seconds)
+
     
 # nohup python -u data_preprocess_NEST.py --data_name='PDAC_64630_mincell3_th98p5' --data_from='/cluster/projects/schwartzgroup/fatema/pancreatic_cancer_visium/210827_A00827_0396_BHJLJTDRXY_Notta_Karen/V10M25-61_D1_PDA_64630_Pa_P_Spatial10x_new/outs/' --filter_min_cell=3 --threshold_gene_exp=98.5 > output_data_preprocess_PDAC_64630_min_cell_3_th98p5.log &
