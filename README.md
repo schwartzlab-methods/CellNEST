@@ -1,4 +1,4 @@
-# ![alt text](https://github.com/schwartzlab-methods/CellNEST/blob/main/nest_logo.svg) CellNEST 
+# ![alt text](https://github.com/schwartzlab-methods/CellNEST/blob/main/CellNESTlogo.png) CellNEST 
 
 Preprint: [NEST: Spatially-mapped cell-cell communication patterns using a deep learning-based attention mechanism](https://www.biorxiv.org/content/10.1101/2024.03.19.585796v1)
 
