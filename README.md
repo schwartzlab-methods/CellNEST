@@ -32,7 +32,9 @@ a. The filtered feature matrix from here: https://cf.10xgenomics.com/samples/spa
 
 b. The spatial imaging data from here: https://cf.10xgenomics.com/samples/spatial-exp/1.1.0/V1_Human_Lymph_Node/V1_Human_Lymph_Node_spatial.tar.gz (please unzip the spatial imaging data)
 
-Both should be kept under the same directory, e.g., data/V1_Human_Lymph_Node_spatial/ directory. We have provided a default ligand-receptor database by merging the records from CellChat and NicheNet database. This is kept under 'database/' directory and will be used by CellNEST unless some other database is referred by the user.   
+Both should be kept under the same directory, e.g., data/V1_Human_Lymph_Node_spatial/ directory. We have provided a default ligand-receptor database by merging the records from CellChat and NicheNet database. This is kept under 'database/' directory and will be used by CellNEST unless some other database is referred by the user.  
+
+NOTE: By default, CellNEST uses a database that combines multiple sources, including the computationally predicted ones. If you want to use only manually curated ligand-receptor pairs, please set: --database_path='database/NEST_database_no_predictedPPI.csv'
 
 Change your current working directory to the downloaded CellNEST repository. Then execute following commands to run CellNEST on the human lymph node sample. 
    
