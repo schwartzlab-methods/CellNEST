@@ -128,7 +128,7 @@ if __name__ == "__main__":
         for i in range (0, len(barcode_info)):
             barcode_type[barcode_info[i][0]] = ''
 
-    ######################### read the NEST output in csv format ####################################################
+    ######################### read the CellNEST output in csv format ####################################################
     if args.top_ccc_file == '':
         inFile = args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv'
         df = pd.read_csv(inFile, sep=",")
