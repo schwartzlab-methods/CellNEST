@@ -1,4 +1,4 @@
-We provide the arguments for running various steps of CellNEST model along with the preferred values as Default. Most of the arguments are self-explanatory. The parameters that may need changing are discussed. 
+We provide the arguments for running various steps of CellCellNEST model along with the preferred values as Default. Most of the arguments are self-explanatory. The parameters that may need changing are discussed. 
 
 ## Data Preprocess 
 Sample command:
@@ -16,14 +16,14 @@ cellnest preprocess --data_name='V1_Human_Lymph_Node_spatial' --data_from='data/
     --spot_diameter = Spot/cell diameter for filtering ligand-receptor pairs based on cell-cell contact information. Should be provided in the same unit as spatia data (for Visium, that is pixel). Type is float. Default=89.43
     --split = How many split sections? Type is Int. Default=0. 
     --neighborhood_threshold = Set neighborhood threshold distance in terms of same unit as spot diameter. Type is float. If not set, then it is set to four times of the spot diameter.
-    --database_path = Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database. Type is String. Default='database/NEST_database.csv'
+    --database_path = Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database. Type is String. Default='database/CellNEST_database.csv'
 
 Varying --filter_min_cell does not bring a big change in the output, and we recommend using a higher value for it to reduce GPU memory consumption. --threshold_gene_exp is a crucial parameter, and we recommend keeping it around 98%. Making it too low will result in too big input graph and may not fit in the GPU. On the other hand, keeping it too high causes the risk of losing important genes. --spot_diameter is set for Visium Spatial Transcriptomics data. If other data format is used, please see the vignette for details. All other parameters can be kept at the default setting unless special circumstances arise, like splitting the input graph using --split to accommodate a very large input dataset.
 
 
 We have the following optional arguments for integrating intracellular pathways with the ligand-receptor coexpression and recommend keeping the parameters at their default values:
 ### Arguments for integrating intracellular signaling with inter-cellular signals
-    --intra_database_path = Provide your desired ligand-receptor database path here. Default database is a postprocessed NicheNet database as explained in the paper. Type is String. Default='database/nichenet_pathways_NEST.csv'. 
+    --intra_database_path = Provide your desired ligand-receptor database path here. Default database is a postprocessed NicheNet database as explained in the paper. Type is String. Default='database/nichenet_pathways_CellNEST.csv'. 
     --add_intra = Set it to 1 for intracellular signaling pathway. Type is Int. Default=1
     --num_hops = Maximum number of hops for intracellular signaling pathway search. Type is Int. Default=10
     --threshold_gene_exp_intra = Threshold percentile for gene expression. Genes above this percentile are considered active. This should be kept very low to detect most of the intracellular signals. Type is float. Default=20% 
@@ -151,7 +151,7 @@ cellnest relay_extract --data_name='V1_Human_Lymph_Node_spatial' --metadata='met
     --annotation_file_path = Path to load the annotation file in csv format (if available). Type is Str. Default=''
     --selfloop_info_file = Path to load the selfloop information file produced during data preprocessing step. Type is Str. Default='' 
     --top_ccc_file = Path to load the selected top CCC file produced during data postprocessing step. Type is Str. Required = True
-    --output_path = Output file name prefix according to user\'s choice. Type is Str. Default='NEST_figures_output/'
+    --output_path = Output file name prefix according to user\'s choice. Type is Str. Default='CellNEST_figures_output/'
 
 Output: An HTML file showing histograms of detected relay counts and a CSV file showing the corresponding counts in a tabular format.
 
@@ -161,7 +161,7 @@ Sample command:
 cellnest relay_celltype --input_path='relay_validation_sample_data/lymph_node/' --output_path='CellNEST_figures_output/' --annotation_file='relay_validation_sample_data/lymph_node/fractional_abundances_by_spot.csv' --modality='spot'
 ```
 ### Arguments
-    --input_path' = Directory containing NEST relay outputs. Type is Str. Required = True 
+    --input_path' = Directory containing CellNEST relay outputs. Type is Str. Required = True 
     --output_path' = Directory to write output plots to. Type is Str. Required = True 
     --annotation_file = Path to CSV file with cell type annotations. Type is = argparse.FileType('r'). Required = True 
     --modality' = Spatial modality with choices = ["sc", "spot"]. Type is Str. Required = True
@@ -175,7 +175,7 @@ Sample command:
 cellnest relay_confidence --input_path='relay_validation_sample_data/lymph_node/' --output_path='CellNEST_figures_output/' --organism='human' --database_dir='database/'
 ```
 ### Arguments
-    --input_path = Path to a CSV file containing relay network outputs from NEST. Must contain column 'Relay Patterns'. Type is  Str. Required = True 
+    --input_path = Path to a CSV file containing relay network outputs from CellNEST. Must contain column 'Relay Patterns'. Type is  Str. Required = True 
     --database_dir = Directory containing PPI and TF-target gene databases. Type is  Str. Required = True 
     --organism = Organism profiled in spatial transcriptomics experiment with choices = ["human", "mouse"]. Type is  Str. Required = True 
     --output_path = Path to csv file to write confidence scoring output. Type is  Str. Required = True 
