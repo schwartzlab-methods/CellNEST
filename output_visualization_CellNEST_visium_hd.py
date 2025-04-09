@@ -60,7 +60,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument( '--data_name', type=str, help='The name of dataset', default="Visium_HD_Human_Colon_Cancer_square_002um_outputs") # , required=True
-    parser.add_argument( '--model_name', type=str, help='Name of the trained model', default='NEST_Visium_HD_Human_Colon_Cancer_square_002um_outputs') #, required=True
+    parser.add_argument( '--model_name', type=str, help='Name of the trained model', default='CellNEST_Visium_HD_Human_Colon_Cancer_square_002um_outputs') #, required=True
     parser.add_argument( '--top_edge_count', type=int, default=135000 ,help='Number of the top communications to plot. To plot all insert -1') # 
     parser.add_argument( '--top_percent', type=int, default=20, help='Top N percentage communications to pick')    
     parser.add_argument( '--metadata_from', type=str, default='metadata/', help='Path to grab the metadata') 
@@ -122,7 +122,7 @@ if __name__ == "__main__":
         for i in range (0, len(barcode_info)):
             barcode_type[barcode_info[i][0]] = ''
 
-    ######################### read the NEST output in csv format ####################################################
+    ######################### read the CellNEST output in csv format ####################################################
     if args.top_ccc_file == '':
         inFile = args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv'
         df = pd.read_csv(inFile, sep=",")
