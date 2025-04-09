@@ -32,7 +32,7 @@ if __name__ == "__main__":
     parser.add_argument( '--spot_diameter', type=float, default=89.43, help='Spot/cell diameter for filtering ligand-receptor pairs based on cell-cell contact information. Should be provided in the same unit as spatia data (for Visium, that is pixel).')
     parser.add_argument( '--split', type=int, default=0 , help='How many split sections?') 
     parser.add_argument( '--neighborhood_threshold', type=float, default=0 , help='Set neighborhood threshold distance in terms of same unit as spot diameter') 
-    parser.add_argument( '--database_path', type=str, default='database/NEST_database.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database.') 
+    parser.add_argument( '--database_path', type=str, default='database/CellNEST_database.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database.') 
     args = parser.parse_args()
     
     if args.neighborhood_threshold == 0:
@@ -303,7 +303,7 @@ if __name__ == "__main__":
     with gzip.open(args.metadata_to + args.data_name +'_barcode_info', 'wb') as fp:  
         pickle.dump(barcode_info, fp)
     
-    ################## required for the nest interactive version ###################
+    ################## required for the CellNEST interactive version ###################
     df = pd.DataFrame(gene_ids)
     df.to_csv(args.metadata_to + 'gene_ids_'+args.data_name+'.csv', index=False, header=False)
     df = pd.DataFrame(cell_barcode)
@@ -319,4 +319,4 @@ if __name__ == "__main__":
         
     print('write data done')
     
-# nohup python -u data_preprocess_NEST.py --data_name='PDAC_64630_mincell3_th98p5' --data_from='/cluster/projects/schwartzgroup/fatema/pancreatic_cancer_visium/210827_A00827_0396_BHJLJTDRXY_Notta_Karen/V10M25-61_D1_PDA_64630_Pa_P_Spatial10x_new/outs/' --filter_min_cell=3 --threshold_gene_exp=98.5 > output_data_preprocess_PDAC_64630_min_cell_3_th98p5.log &
+# nohup python -u data_preprocess_CellNEST.py --data_name='PDAC_64630_mincell3_th98p5' --data_from='/cluster/projects/schwartzgroup/fatema/pancreatic_cancer_visium/210827_A00827_0396_BHJLJTDRXY_Notta_Karen/V10M25-61_D1_PDA_64630_Pa_P_Spatial10x_new/outs/' --filter_min_cell=3 --threshold_gene_exp=98.5 > output_data_preprocess_PDAC_64630_min_cell_3_th98p5.log &
