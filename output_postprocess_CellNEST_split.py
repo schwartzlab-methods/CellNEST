@@ -33,7 +33,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument( '--data_name', type=str, default='Visium_HD_Human_Colon_Cancer_square_002um_outputs', help='The name of dataset') #  required=True
-    parser.add_argument( '--model_name', type=str, default='NEST_Visium_HD_Human_Colon_Cancer_square_002um_outputs', help='Name of the trained model') #, required=True
+    parser.add_argument( '--model_name', type=str, default='CellNEST_Visium_HD_Human_Colon_Cancer_square_002um_outputs', help='Name of the trained model') #, required=True
     parser.add_argument( '--total_runs', type=int, default=3, help='How many runs for ensemble (at least 2 are preferred)') #, required=True
     #######################################################################################################
     parser.add_argument( '--embedding_path', type=str, default='embedding_data/', help='Path to grab the attention scores from')
