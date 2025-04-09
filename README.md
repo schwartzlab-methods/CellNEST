@@ -6,9 +6,9 @@ Preprint: [NEST: Spatially-mapped cell-cell communication patterns using a deep 
 
 For users' convenience, we have a singularity image with the full installation of the environment for running the CellNEST model. Users can pull the image using the following command:
 ```
-singularity pull cellnest_image.sif library://fatema/collection/nest_image.sif:latest
+singularity pull cellnest_image.sif library://fatema/collection/cellnest_image.sif:latest
 ```
-No additional installation of any package is required with this image. A vignette for following this approach is provided [here](vignette/running_NEST_singularity_container.md). This is tested on Digital Alliance as well. For the users who want to install the environment themselves, we provide the list of required Python packages and supported systems below.  
+No additional installation of any package is required with this image. A vignette for following this approach is provided [here](vignette/running_CellNEST_singularity_container.md). This is tested on Digital Alliance as well. For the users who want to install the environment themselves, we provide the list of required Python packages and supported systems below.  
 
 ###   Used Python packages: 
 [Python libraries](https://github.com/schwartzlab-methods/CellNEST/blob/main/requirements.txt)
@@ -34,11 +34,11 @@ b. The spatial imaging data from here: https://cf.10xgenomics.com/samples/spatia
 
 Both should be kept under the same directory, e.g., data/V1_Human_Lymph_Node_spatial/ directory. We have provided a default ligand-receptor database by merging the records from CellChat and NicheNet database. This is kept under 'database/' directory and will be used by CellNEST unless some other database is referred by the user.  
 
-NOTE: By default, CellNEST uses a database that combines multiple sources, including the computationally predicted ones. If you want to use only manually curated ligand-receptor pairs, please set: --database_path='database/NEST_database_no_predictedPPI.csv'
+NOTE: By default, CellNEST uses a database that combines multiple sources, including the computationally predicted ones. If you want to use only manually curated ligand-receptor pairs, please set: --database_path='database/CellNEST_database_no_predictedPPI.csv'
 
 Change your current working directory to the downloaded CellNEST repository. Then execute following commands to run CellNEST on the human lymph node sample. 
    
-1. CellNEST takes two main inputs: spatial transcriptomics dataset and a ligand-receptor database. Assuming that the spatial dataset is in "data/V1_Human_Lymph_Node_spatial/" directory and the ligand-receptor database is in 'database/NEST_database.csv', data preprocessing for input graph generation can be done as follows:
+1. CellNEST takes two main inputs: spatial transcriptomics dataset and a ligand-receptor database. Assuming that the spatial dataset is in "data/V1_Human_Lymph_Node_spatial/" directory and the ligand-receptor database is in 'database/CellNEST_database.csv', data preprocessing for input graph generation can be done as follows:
 ````
 cellnest preprocess --data_name='V1_Human_Lymph_Node_spatial' --data_from='data/V1_Human_Lymph_Node_spatial/'
 ````
