@@ -16,7 +16,7 @@ import gc
 import os
 import subprocess
 
-# load the NEST detected results
+# load the CellNEST detected results
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument( '--data_name', type=str, help='The name of dataset', required=True) # 
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     parser.add_argument( '--p_value_cutoff', type=float, default=0.05, help='P value cutoff for filtering the ccc')  
     args = parser.parse_args()
 
-    ######################### read the NEST output in csv format ####################################################
+    ######################### read the CellNEST output in csv format ####################################################
     args.metadata_from = args.metadata_from + args.data_name + '/'
     args.data_from = args.data_from + args.data_name + '/'
     args.embedding_path  = args.embedding_path + args.data_name + '/'
@@ -91,12 +91,12 @@ if __name__ == "__main__":
             pickle.dump([row_col, edge_weight, lig_rec, total_num_cell],fp)
              
         # run the model 3 times, first two asynchronous and 3rd one synchronous
-        subprocess.Popen(["bash", "nest", "run", "--data_name="+args.data_name+'_shuffled', "--num_epoch=60000", "--model_name="+args.model_name+'_shuffled', "--run_id=1"], stdout="output_"+args.data_name+'_shuffled'+"_run1.log" )
-        subprocess.Popen(["bash", "nest", "run", "--data_name="+args.data_name+'_shuffled', "--num_epoch=60000", "--model_name="+args.model_name+'_shuffled', "--run_id=2"], stdout="output_"+args.data_name+'_shuffled'+"_run2.log" )
-        subprocess.run(["bash", "nest", "run", "--data_name="+args.data_name+'_shuffled', "--num_epoch=60000", "--model_name="+args.model_name+'_shuffled', "--run_id=3"], stdout="output_"+args.data_name+'_shuffled'+"_run3.log" )
+        subprocess.Popen(["bash", "cellnest", "run", "--data_name="+args.data_name+'_shuffled', "--num_epoch=60000", "--model_name="+args.model_name+'_shuffled', "--run_id=1"], stdout="output_"+args.data_name+'_shuffled'+"_run1.log" )
+        subprocess.Popen(["bash", "cellnest", "run", "--data_name="+args.data_name+'_shuffled', "--num_epoch=60000", "--model_name="+args.model_name+'_shuffled', "--run_id=2"], stdout="output_"+args.data_name+'_shuffled'+"_run2.log" )
+        subprocess.run(["bash", "cellnest", "run", "--data_name="+args.data_name+'_shuffled', "--num_epoch=60000", "--model_name="+args.model_name+'_shuffled', "--run_id=3"], stdout="output_"+args.data_name+'_shuffled'+"_run3.log" )
        
         # postprocess results
-        subprocess.run(["bash", "nest", "postprocess", "--data_name="+args.data_name+'_shuffled', "--model_name="+args.model_name+'_shuffled', "--total_runs=3"], stdout="output_"+args.data_name+'_shuffled'+"_postproc.log" )
+        subprocess.run(["bash", "cellnest", "postprocess", "--data_name="+args.data_name+'_shuffled', "--model_name="+args.model_name+'_shuffled', "--total_runs=3"], stdout="output_"+args.data_name+'_shuffled'+"_postproc.log" )
 
         # read it and get the values
         inFile = args.output_path + args.model_name+'_shuffled'+'_top' + str(args.top_percent) + 'percent_temporary.csv'
