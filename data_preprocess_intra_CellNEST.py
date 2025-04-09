@@ -14,7 +14,7 @@ import gzip
 import argparse
 import os
 import scanpy as sc
-import pathway_search_NEST_v2 as pathway
+import pathway_search_CellNEST_v2 as pathway
 
 print('user input reading')
 #current_dir = 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument( '--data_name', type=str, default='V1_Human_Lymph_Node_spatial_intra', help='Name of the dataset')  
-    parser.add_argument( '--data_from', type=str, default='/cluster/projects/schwartzgroup/fatema/data/V1_Human_Lymph_Node_spatial/', help='Path to the dataset to read from. Space Ranger outs/ folder is preferred. Otherwise, provide the *.mtx file of the gene expression matrix.')
+    parser.add_argument( '--data_from', type=str, default='data/V1_Human_Lymph_Node_spatial/', help='Path to the dataset to read from. Space Ranger outs/ folder is preferred. Otherwise, provide the *.mtx file of the gene expression matrix.')
     ################# default is set ################################################################
     parser.add_argument( '--data_to', type=str, default='input_graph/', help='Path to save the input graph (to be passed to GAT)')
     parser.add_argument( '--metadata_to', type=str, default='metadata/', help='Path to save the metadata')
@@ -34,8 +34,8 @@ if __name__ == "__main__":
     parser.add_argument( '--spot_diameter', type=float, default=89.43, help='Spot/cell diameter for filtering ligand-receptor pairs based on cell-cell contact information. Should be provided in the same unit as spatia data (for Visium, that is pixel).')
     parser.add_argument( '--split', type=int, default=0 , help='How many split sections?') 
     parser.add_argument( '--neighborhood_threshold', type=float, default=0 , help='Set neighborhood threshold distance in terms of same unit as spot diameter') 
-    parser.add_argument( '--database_path', type=str, default='database/NEST_database.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database.') 
-    parser.add_argument( '--intra_database_path', type=str, default='database/nichenet_pathways_NEST.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database.') 
+    parser.add_argument( '--database_path', type=str, default='database/CellNEST_database.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database.') 
+    parser.add_argument( '--intra_database_path', type=str, default='database/nichenet_pathways_CellNEST.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database.') 
     parser.add_argument( '--add_intra', type=int, default=1 , help='Set it to 1 for intracellular signaling pathway')
     parser.add_argument( '--num_hops', type=int, default=10 , help='Maximum number of hops for intra signaling pathway')
     parser.add_argument( '--threshold_gene_exp_intra', type=float, default=20, help='Threshold percentile for gene expression. Genes above this percentile are considered active.')
@@ -434,7 +434,7 @@ if __name__ == "__main__":
     with gzip.open(args.metadata_to + args.data_name +'_barcode_info', 'wb') as fp:  
         pickle.dump(barcode_info, fp)
     
-    ################## required for the nest interactive version ###################
+    ################## required for the CellNEST interactive version ###################
     df = pd.DataFrame(gene_ids)
     df.to_csv(args.metadata_to + 'gene_ids_'+args.data_name+'.csv', index=False, header=False)
     df = pd.DataFrame(cell_barcode)
@@ -450,4 +450,4 @@ if __name__ == "__main__":
         
     print('write data done')
     
-# nohup python -u data_preprocess_NEST.py --data_name='PDAC_64630_mincell3_th98p5' --data_from='/cluster/projects/schwartzgroup/fatema/pancreatic_cancer_visium/210827_A00827_0396_BHJLJTDRXY_Notta_Karen/V10M25-61_D1_PDA_64630_Pa_P_Spatial10x_new/outs/' --filter_min_cell=3 --threshold_gene_exp=98.5 > output_data_preprocess_PDAC_64630_min_cell_3_th98p5.log &
+# nohup python -u data_preprocess_CellNEST.py --data_name='PDAC_64630_mincell3_th98p5' --data_from='pancreatic_cancer_visium/210827_A00827_0396_BHJLJTDRXY_Notta_Karen/V10M25-61_D1_PDA_64630_Pa_P_Spatial10x_new/outs/' --filter_min_cell=3 --threshold_gene_exp=98.5 > output_data_preprocess_PDAC_64630_min_cell_3_th98p5.log &
