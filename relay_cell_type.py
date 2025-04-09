@@ -168,7 +168,7 @@ def make_plots(
 
 def main():
     parser = argparse.ArgumentParser(description="Visualize cell types participating in relay networks")
-    parser.add_argument('--input_path', type = str, required = True, help = "Directory containing NEST relay outputs")
+    parser.add_argument('--input_path', type = str, required = True, help = "Directory containing CellNEST relay outputs")
     parser.add_argument('--output_path', type = str, required = True, help = "Directory to write output plots to")
     parser.add_argument('--annotation_file', type = argparse.FileType('r'), required = True, help = "Path to csv file with cell type annotations")
     parser.add_argument('--modality', type = str, required = True, help = "Spatial modality", choices = ["sc", "spot"])
@@ -188,7 +188,7 @@ if __name__ == "__main__":
 
 ########## sample input ##########################
 '''
-relay_cell_type.py --input_dir='relay_validation_sample_data/lymph_node/' --output_dir='NEST_figures_output/' 
+relay_cell_type.py --input_dir='relay_validation_sample_data/lymph_node/' --output_dir='CellNEST_figures_output/' 
     --annotation_file='relay_validation_sample_data/lymph_node/fractional_abundances_by_spot.csv' --modality='spot' 
 '''
 
