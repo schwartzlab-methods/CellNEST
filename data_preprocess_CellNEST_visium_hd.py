@@ -38,7 +38,7 @@ if __name__ == "__main__":
     parser.add_argument( '--distance_measure', type=str, default='knn' , help='Set neighborhood cutoff criteria')
     parser.add_argument( '--k', type=int, default=50 , help='Set neighborhood cutoff number')    
     parser.add_argument( '--neighborhood_threshold', type=float, default=0, help='Set neighborhood threshold distance in terms of same unit as spot diameter') 
-    parser.add_argument( '--database_path', type=str, default='database/NEST_database.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database.') 
+    parser.add_argument( '--database_path', type=str, default='database/CellNEST_database.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database.') 
     #######################################
     parser.add_argument( '--ROI', type=int, default=0 , help='Do you have a ROI')
     parser.add_argument( '--x_min', type=int, default=0 , help='Set x_min')  
@@ -511,7 +511,7 @@ if __name__ == "__main__":
 
 
     print("active nodes %d"%len(node_id_sorted_xy))
-    ################## required for the nest interactive version ###################
+    ################## required for the CellNEST interactive version ###################
     df = pd.DataFrame(gene_ids)
     df.to_csv(args.metadata_to + 'gene_ids_'+args.data_name+'.csv', index=False, header=False)
 
@@ -536,4 +536,4 @@ if __name__ == "__main__":
     print('preprocess time in seconds: ', (end_time-start_time).seconds)
 
     
-# nohup python -u data_preprocess_NEST.py --data_name='PDAC_64630_mincell3_th98p5' --data_from='outs/' --filter_min_cell=3 --threshold_gene_exp=98.5 > output_data_preprocess.log &
+# nohup python -u data_preprocess_CellNEST.py --data_name='PDAC_64630_mincell3_th98p5' --data_from='outs/' --filter_min_cell=3 --threshold_gene_exp=98.5 > output_data_preprocess.log &
