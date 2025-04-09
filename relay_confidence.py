@@ -124,7 +124,7 @@ def query_relay_network(
 
 def main():
     parser = argparse.ArgumentParser(description = "Query confidence score of a relay network")
-    parser.add_argument('--input_path', type = str, required = True, help = "Path to csv file containing relay network outputs from NEST. Must contain column 'Relay Patterns'")
+    parser.add_argument('--input_path', type = str, required = True, help = "Path to csv file containing relay network outputs from CellNEST. Must contain column 'Relay Patterns'")
     parser.add_argument('--database_dir', type = str, required = True, help = "Directory containing PPI and TF-target gene databases")
     parser.add_argument('--organism', type = str, required = True, help = "Organism profiled in spatial transcriptomics experiment", choices = ["human", "mouse"])
     parser.add_argument('--output_path', type = str, required = True, help = "Path to csv file to write confidence scoring output")
