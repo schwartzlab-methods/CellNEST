@@ -64,7 +64,7 @@ if __name__ == "__main__":
     parser.add_argument( '--annotation_file_path', type=str, default='', help='Path to load the annotation file in csv format (if available) ') #_ayah_histology
     parser.add_argument( '--selfloop_info_file', type=str, default='', help='Path to load the selfloop information file produced during data preprocessing step')
     parser.add_argument( '--top_ccc_file', type=str, required = True, help='Path to load the selected top CCC file produced during data postprocessing step')
-    parser.add_argument( '--output_path', type=str, default='NEST_figures_output/', help='Output file name prefix according to user\'s choice')
+    parser.add_argument( '--output_path', type=str, default='CellNEST_figures_output/', help='Output file name prefix according to user\'s choice')
     parser.add_argument( '--target_relay', type=str, default='', help='Target relay to plot according to user\'s choice. For example: ')
     
     args = parser.parse_args()
