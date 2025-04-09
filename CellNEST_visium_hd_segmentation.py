@@ -194,9 +194,9 @@ def total_umi(adata_, cut_off,output_name):
 parser = argparse.ArgumentParser()
 ################## Mandatory ####################################################################
 parser.add_argument( '--data_name', type=str, help='Name of the dataset', default="Visium_HD_Human_Colon_Cancer_square_002um_outputs")  
-parser.add_argument( '--data_from', type=str, default='/cluster/projects/schwartzgroup/fatema/data/Visium_HD_Human_Colon_Cancer_square_002um_outputs/', help='Path to the dataset to read from. Space Ranger outs/ folder is preferred. Otherwise, provide the *.mtx file of the gene expression matrix.')
+parser.add_argument( '--data_from', type=str, default='data/Visium_HD_Human_Colon_Cancer_square_002um_outputs/', help='Path to the dataset to read from. Space Ranger outs/ folder is preferred. Otherwise, provide the *.mtx file of the gene expression matrix.')
 parser.add_argument( '--file_name', type=str, help='Name of the btf file', default='Visium_HD_Human_Colon_Cancer_tissue_image.btf')
-parser.add_argument( '--data_to', type=str, default='/cluster/projects/schwartzgroup/fatema/NEST/metadata/Visium_HD_Human_Colon_Cancer_square_002um_outputs/', help='Path to save the input graph (to be passed to GAT)')
+parser.add_argument( '--data_to', type=str, default='NEST/metadata/Visium_HD_Human_Colon_Cancer_square_002um_outputs/', help='Path to save the input graph (to be passed to GAT)')
 args = parser.parse_args()
   
 # Load the image file
