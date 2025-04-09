@@ -85,19 +85,19 @@ if __name__ == "__main__":
     print(device)
 
     if args.total_subgraphs == 1:
-        from CCC_gat import get_graph, train_NEST
+        from CCC_gat import get_graph, train_CellNEST
         # data preparation
         data_loader, num_feature = get_graph(args.training_data)    
         # train the model
-        DGI_model = train_NEST(args, data_loader=data_loader, in_channels=num_feature)
+        DGI_model = train_CellNEST(args, data_loader=data_loader, in_channels=num_feature)
         # training done
     elif args.total_subgraphs > 1:
-        from CCC_gat_split import get_split_graph, train_NEST #_v2
+        from CCC_gat_split import get_split_graph, train_CellNEST #_v2
         # data preparation
         # graph_bag, num_feature = get_graph(args.training_data)
         graph_bag, num_feature = get_split_graph(args.training_data, node_id_sorted, args.total_subgraphs)    
         # train the model
-        DGI_model = train_NEST(args, graph_bag=graph_bag, in_channels=num_feature)
+        DGI_model = train_CellNEST(args, graph_bag=graph_bag, in_channels=num_feature)
         # training done
 
 
