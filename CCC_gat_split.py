@@ -12,7 +12,7 @@ from torch_geometric.nn import DeepGraphInfomax #Linear,
 from torch_geometric.data import Data, DataLoader
 import gzip
 import gc
-from GATv2Conv_NEST import GATv2Conv
+from GATv2Conv_CellNEST import GATv2Conv
 
 
 
@@ -245,7 +245,7 @@ def corruption(data):
     return my_data(x, data.edge_index, data.edge_attr)
 
 
-def train_NEST(args, graph_bag, in_channels):
+def train_CellNEST(args, graph_bag, in_channels):
     """Add Statement of Purpose
     Args: [to be]
            
