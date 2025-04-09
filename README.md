@@ -129,7 +129,7 @@ For a detailed explanation of the available parameters and their usage, please s
 
 1. [Main workflow: Generate active CCC lists given a spatial transcriptomics data](vignette/workflow.md)
 2. [Downstream analysis to filter CCC list for specific region / cell type / specific ligand-receptor pair](vignette/filter_ccc_list_for_type_region.md)
-3. [Running the CellNEST model through singularity image](vignette/running_NEST_singularity_container.md) 
+3. [Running the CellNEST model through singularity image](vignette/running_CellNEST_singularity_container.md) 
 4. [CellNEST on deconvoluted Spatial Transcriptomics data](vignette/deconvolute_ST.md) 
 5. [CellNEST on MERFISH data after gene imputation using scRNA-seq data](vignette/integrate_scRNAseq_merfish.md) 
 
