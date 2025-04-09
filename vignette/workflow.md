@@ -15,7 +15,7 @@ For a requested 35 Intel Xeon CPUs @ 2.4 Ghz with 150 GB memory, `cellnest prepr
 
 ## Data preprocessing 
 
-We first preprocess the data before passing it to CellNEST. It takes two main inputs: spatial transcriptomics dataset and a ligand-receptor database. Assuming that the spatial dataset is in "data/V1_Human_Lymph_Node_spatial/" directory and the ligand-receptor database is in 'database/NEST_database.csv', data preprocessing for input graph generation can simply be done as follows:
+We first preprocess the data before passing it to CellNEST. It takes two main inputs: spatial transcriptomics dataset and a ligand-receptor database. Assuming that the spatial dataset is in "data/V1_Human_Lymph_Node_spatial/" directory and the ligand-receptor database is in 'database/CellNEST_database.csv', data preprocessing for input graph generation can simply be done as follows:
 ````
 cellnest preprocess --data_name='V1_Human_Lymph_Node_spatial' --data_from='data/V1_Human_Lymph_Node_spatial/'
 ````
