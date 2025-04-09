@@ -5,9 +5,9 @@ We can pull the singularity image as follows:
 ```
 mkdir cellnest_container 
 cd cellnest_container
-singularity pull cellnest_image.sif library://fatema/collection/nest_image.sif:latest
+singularity pull cellnest_image.sif library://fatema/collection/cellnest_image.sif:latest
 ```
-[** NOTE: Instructions for pulling the image on Digital Alliance are provided at the end.](https://github.com/schwartzlab-methods/CellNEST/blob/main/vignette/running_NEST_singularity_container.md#running-cellnest-container-on-digital-alliance-using-apptainer)
+[** NOTE: Instructions for pulling the image on Digital Alliance are provided at the end.](https://github.com/schwartzlab-methods/CellNEST/blob/main/vignette/running_CellNEST_singularity_container.md#running-cellnest-container-on-digital-alliance-using-apptainer)
 
 ### Running CellNEST model through the downloaded singularity image
 
@@ -145,7 +145,7 @@ It will generate edge_graph.pdf and edge_graph.svg in the current working direct
 #### Pulling the Singularity image on Digital Alliance using Apptainer
 ```
 module load apptainer
-apptainer pull cellnest_image.sif library://fatema/collection/nest_image.sif:latest
+apptainer pull cellnest_image.sif library://fatema/collection/cellnest_image.sif:latest
 ```
 The command might show the following error:
 
@@ -160,7 +160,7 @@ apptainer remote list
 
 After that we are able to pull the image using the following command:
 ```
-apptainer pull cellnest_image.sif library://fatema/collection/nest_image.sif:latest
+apptainer pull cellnest_image.sif library://fatema/collection/cellnest_image.sif:latest
 ```
 All the Singularity commands mentioned above also work with Apptainer if the 'singularity' term is replaced with 'apptainer'. Few things to note:
 1. We may have to move the CellNEST repository and data to the CellNEST container so that those are visible to the container while running. 
