@@ -210,7 +210,7 @@ if __name__ == "__main__":
         layer = layer + 1
         print('layer %d'%layer)
         csv_record_dict = defaultdict(list)
-        for run_time in [1, 3, 6]: #range (start_index, start_index+total_runs):
+        for run_time in range (start_index, start_index+total_runs):
             filename_suffix = '_'+ 'r'+str(run_time) +'_' #str(run_time+1) +'_'
             gc.collect()
             run = run_time
