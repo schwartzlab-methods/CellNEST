@@ -215,16 +215,11 @@ if __name__ == "__main__":
             gc.collect()
             run = run_time
             print('run %d'%run)
-    
-            attention_scores = []
-            for i in range (0, datapoint_size):
-                attention_scores.append([])   
-                for j in range (0, datapoint_size):	
-                    attention_scores[i].append([])   
-                    attention_scores[i][j] = []
-    
-            distribution = []
 
+
+                            
+            attention_scores = defaultdict(dict)      
+            distribution = []
             ##########################
             print(args.model_name) 
             #######################################################################
@@ -258,6 +253,9 @@ if __name__ == "__main__":
                     ###################################
                         split_i = unfiltered_index_to_filtered_serial[i] 
                         split_j = unfiltered_index_to_filtered_serial[j]
+                        if split_i not in attention_scores or split_j not in attention_scores[split_i]:
+                            attention_scores[split_i][split_j]=[]
+                        
                         attention_scores[split_i][split_j].append(X_attention_bundle[l][index][0]) 
                         distribution.append(X_attention_bundle[l][index][0])
                         edge_found = edge_found + 1
