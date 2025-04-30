@@ -14,7 +14,7 @@ import gzip
 import argparse
 import os
 import scanpy as sc
-import pathway_search_CellNEST_v2 as pathway
+import pathway_search_CellNEST as pathway
 
 print('user input reading')
 #current_dir = 
