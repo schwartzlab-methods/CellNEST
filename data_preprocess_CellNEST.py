@@ -32,6 +32,7 @@ if __name__ == "__main__":
     parser.add_argument( '--spot_diameter', type=float, default=89.43, help='Spot/cell diameter for filtering ligand-receptor pairs based on cell-cell contact information. Should be provided in the same unit as spatia data (for Visium, that is pixel).')
     parser.add_argument( '--split', type=int, default=0 , help='How many split sections?') 
     parser.add_argument( '--neighborhood_threshold', type=float, default=0 , help='Set neighborhood threshold distance in terms of same unit as spot diameter') 
+    parser.add_argument( '--block_autocrine', type=int, default=0 , help='Set to 1 if you want to ignore autocrine signals.') 
     parser.add_argument( '--database_path', type=str, default='database/CellNEST_database.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database.') 
     args = parser.parse_args()
     
@@ -242,7 +243,8 @@ if __name__ == "__main__":
             for j in range (0, cell_vs_gene.shape[0]): # receptor
                 if dist_X[i,j]==0: #distance_matrix[i,j] >= args.neighborhood_threshold: #spot_diameter*4
                     continue
-    
+                if args.block_autocrine == 1 and i==j:
+                    continue
                 for gene_rec in ligand_dict_dataset[gene]:
                     if cell_vs_gene[j][gene_index[gene_rec]] >= cell_percentile[j]: # or cell_vs_gene[i][gene_index[gene]] >= cell_percentile[i][4] :#gene_list_percentile[gene_rec][1]: #global_percentile: #
                         if gene_rec in cell_cell_contact and distance_matrix[i,j] > args.spot_diameter:
