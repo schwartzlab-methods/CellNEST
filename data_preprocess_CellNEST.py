@@ -33,6 +33,7 @@ if __name__ == "__main__":
     parser.add_argument( '--split', type=int, default=0 , help='How many split sections?') 
     parser.add_argument( '--neighborhood_threshold', type=float, default=0 , help='Set neighborhood threshold distance in terms of same unit as spot diameter') 
     parser.add_argument( '--block_autocrine', type=int, default=0 , help='Set to 1 if you want to ignore autocrine signals.') 
+    parser.add_argument( '--no_filter_juxtacrine', type=int, default=0, help='Set to 1 if you want no filtering for juxtacrine signals.')     
     parser.add_argument( '--database_path', type=str, default='database/CellNEST_database.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database.') 
     args = parser.parse_args()
     
@@ -247,7 +248,7 @@ if __name__ == "__main__":
                     continue
                 for gene_rec in ligand_dict_dataset[gene]:
                     if cell_vs_gene[j][gene_index[gene_rec]] >= cell_percentile[j]: # or cell_vs_gene[i][gene_index[gene]] >= cell_percentile[i][4] :#gene_list_percentile[gene_rec][1]: #global_percentile: #
-                        if gene_rec in cell_cell_contact and distance_matrix[i,j] > args.spot_diameter:
+                        if args.no_filter_juxtacrine==0 and (gene_rec in cell_cell_contact and distance_matrix[i,j] > args.spot_diameter):
                             continue
     
                         communication_score = cell_vs_gene[i][gene_index[gene]] * cell_vs_gene[j][gene_index[gene_rec]]
