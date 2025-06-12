@@ -1,6 +1,6 @@
 # ![alt text](https://github.com/schwartzlab-methods/CellNEST/blob/main/CellNESTlogo.png) CellNEST 
 
-Preprint: [NEST: Spatially-mapped cell-cell communication patterns using a deep learning-based attention mechanism](https://www.biorxiv.org/content/10.1101/2024.03.19.585796v1)
+Nature Methods: [CellNEST reveals cell–cell relay networks using attention mechanisms on spatial transcriptomics](https://www.nature.com/articles/s41592-025-02721-3)
 
 ### Singularity Image:
 
