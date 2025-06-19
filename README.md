@@ -59,7 +59,7 @@ nohup cellnest run  --data_name='V1_Human_Lymph_Node_spatial' --num_epoch 80000 
 nohup cellnest run  --data_name='V1_Human_Lymph_Node_spatial' --num_epoch 80000 --model_name='CellNEST_V1_Human_Lymph_Node_spatial' --run_id=5 > output_human_lymph_node_run5.log &
 ````
 
-  It will save trained model state with minimum loss in 'model/V1_Human_Lymph_Node_spatial/' and the corresponding attention scores and node embedding in 'embedding_data/V1_Human_Lymph_Node_spatial/'.   
+  It will save trained model state with minimum loss in 'model/V1_Human_Lymph_Node_spatial/' and the corresponding attention scores and node embedding in 'embedding_data/V1_Human_Lymph_Node_spatial/'. Note: To have reproducible results, please use --manual_seed='yes' and --seed=1 (your chosen seed).   
 
 3. To postprocess the model output, i.e., ensemble of multiple runs (through rank of product) and producing list of top 20% highly ranked communications we have to run following commands:
 
