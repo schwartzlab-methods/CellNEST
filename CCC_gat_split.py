@@ -32,7 +32,7 @@ def get_split_graph(training_data, node_id_sorted, total_subgraphs): # use this 
     node_id_sorted_xy = pickle.load(fp)
     nodes_active = dict()
     for i in range(0, len(node_id_sorted_xy)): 
-        nodes_active[node_id_sorted_xy[i][0]]
+        nodes_active[node_id_sorted_xy[i][0]] = ''
 
 
     datapoint_size = len(nodes_active.keys())
