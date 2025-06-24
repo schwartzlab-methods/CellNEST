@@ -35,13 +35,14 @@ if __name__ == "__main__":
     parser.add_argument( '--data_name', type=str, default='Visium_HD_Human_Colon_Cancer_square_002um_outputs', help='The name of dataset') #  required=True
     parser.add_argument( '--model_name', type=str, default='CellNEST_Visium_HD_Human_Colon_Cancer_square_002um_outputs', help='Name of the trained model') #, required=True
     parser.add_argument( '--total_runs', type=int, default=3, help='How many runs for ensemble (at least 2 are preferred)') #, required=True
+    parser.add_argument( '--total_subgraphs', type=int, default=15)
     #######################################################################################################
     parser.add_argument( '--embedding_path', type=str, default='embedding_data/', help='Path to grab the attention scores from')
     parser.add_argument( '--metadata_from', type=str, default='metadata/', help='Path to grab the metadata') 
     parser.add_argument( '--data_from', type=str, default='input_graph/', help='Path to grab the input graph from (to be passed to GAT)')
     parser.add_argument( '--output_path', type=str, default='output/', help='Path to save the visualization results, e.g., histograms, graph etc.')
     parser.add_argument( '--top_percent', type=int, default=20, help='Top N percentage communications to pick')
-    parser.add_argument( '--total_subgraphs', type=int, default=15)
+    
     args = parser.parse_args()
 
     args.metadata_from = args.metadata_from + args.data_name + '/'
