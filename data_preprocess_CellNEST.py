@@ -142,7 +142,7 @@ if __name__ == "__main__":
             i=i+1
         	
         node_id_sorted_xy = sorted(node_id_sorted_xy, key = lambda x: (x[1], x[2]))
-        with gzip.open(metadata_to + args.data_name+'_'+'node_id_sorted_xy', 'wb') as fp:  #b, a:[0:5]   
+        with gzip.open(args.metadata_to + args.data_name+'_'+'node_id_sorted_xy', 'wb') as fp:  #b, a:[0:5]   
         	pickle.dump(node_id_sorted_xy, fp)
     
     
@@ -179,7 +179,7 @@ if __name__ == "__main__":
             cell_cell_contact[receptor] = '' # keep track of which ccc are labeled as cell-cell-contact
     
     
-    print('number of ligand-receptor pairs in this dataset %d '%count_pair) 
+    
     print('number of ligands %d '%len(ligand_dict_dataset.keys()))
     
     included_gene=[]
@@ -199,7 +199,7 @@ if __name__ == "__main__":
             l_r_pair[gene][receptor_gene] = lr_id 
             lr_id  = lr_id  + 1
         
-    
+    print('number of ligand-receptor pairs in this dataset %d '%lr_id) 
     ###################################################################################
     # build physical distance matrix
     from sklearn.metrics.pairwise import euclidean_distances
