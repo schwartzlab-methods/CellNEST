@@ -32,6 +32,8 @@ if __name__ == "__main__":
     parser.add_argument( '--tissue_position_file', type=str, default='None', help='If your --data_from argument points to a *.mtx file instead of Space Ranger, then please provide the path to tissue position file.')
     parser.add_argument( '--spot_diameter', type=float, default=89.43, help='Spot/cell diameter for filtering ligand-receptor pairs based on cell-cell contact information. Should be provided in the same unit as spatia data (for Visium, that is pixel).')
     parser.add_argument( '--split', type=int, default=0 , help='How many split sections?') 
+    parser.add_argument( '--distance_measure', type=str, default='fixed_threshold' , help='Set neighborhood cutoff criteria from [knn, fixed_threshold]')
+    parser.add_argument( '--k', type=int, default=50 , help='Set neighborhood cutoff number')    
     parser.add_argument( '--neighborhood_threshold', type=float, default=0 , help='Set neighborhood threshold distance in terms of same unit as spot diameter') 
     parser.add_argument( '--block_autocrine', type=int, default=0 , help='Set to 1 if you want to ignore autocrine signals.') 
     parser.add_argument( '--no_filter_juxtacrine', type=int, default=0, help='Set to 1 if you want no filtering for juxtacrine signals.')     
@@ -212,13 +214,18 @@ if __name__ == "__main__":
         min_value=np.min(distance_matrix[:,j]) # min distance of node 'j' to all it's neighbors (incoming)
         for i in range(distance_matrix.shape[0]):
             dist_X[i,j] = 1-(distance_matrix[i,j]-min_value)/(max_value-min_value) # scale the distance of node 'j' to all it's neighbors (incoming) and flip it so that nearest one will have maximum weight.
-            	
-        #list_indx = list(np.argsort(dist_X[:,j]))
-        #k_higher = list_indx[len(list_indx)-k_nn:len(list_indx)]
-        for i in range(0, distance_matrix.shape[0]):
-            if distance_matrix[i,j] > args.neighborhood_threshold: #i not in k_higher:
-                dist_X[i,j] = 0 # no ccc happening outside threshold distance
-                
+
+        if args.distance_measure=='knn':
+            list_indx = list(np.argsort(dist_X[:,j]))
+            k_higher = list_indx[len(list_indx)-k_nn:len(list_indx)]
+            for i in range(0, distance_matrix.shape[0]):
+                if i not in k_higher:
+                    dist_X[i,j] = 0 #-1
+        else:
+            for i in range(0, distance_matrix.shape[0]):
+                if distance_matrix[i,j] > args.neighborhood_threshold: #i not in k_higher:
+                    dist_X[i,j] = 0 # no ccc happening outside threshold distance
+    
     #cell_rec_count = np.zeros((cell_vs_gene.shape[0]))
     #####################################################################################
     # Set threshold gene percentile
