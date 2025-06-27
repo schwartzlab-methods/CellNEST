@@ -83,21 +83,14 @@ if __name__ == "__main__":
     ################################################################################################################
     dict_cell_edge = defaultdict(list) # key = node. values = incoming edges
     dict_cell_neighbors = defaultdict(list) # key = node. value = nodes corresponding to incoming edges/neighbors
-    
+    nodes_active = dict()
     for i in range(0, len(row_col)):
         dict_cell_edge[row_col[i][1]].append(i) # index of the edges
         dict_cell_neighbors[row_col[i][1]].append(row_col[i][0]) # neighbor id
+        nodes_active[row_col[i][1]] = '' # to
+        nodes_active[row_col[i][0]] = '' # from
 
 
-
-    node_id_sorted = args.metadata_from + args.data_name+'_'+'node_id_sorted_xy'
-    fp = gzip.open(node_id_sorted, 'rb')
-    node_id_sorted_xy = pickle.load(fp)
-    nodes_active = dict()
-    for i in range(0, len(node_id_sorted_xy)): 
-        nodes_active[node_id_sorted_xy[i][0]]
-
-    
     datapoint_size = len(nodes_active.keys())
 
     for i in range (0, datapoint_size):
@@ -106,14 +99,22 @@ if __name__ == "__main__":
         dict_cell_neighbors[i] = neighbor_list
 
     
+    node_id_sorted = args.metadata_from + args.data_name+'_'+'node_id_sorted_xy'
+    fp = gzip.open(node_id_sorted, 'rb')
+    node_id_sorted_xy = pickle.load(fp)
 
-    # filtered region means the region inside ROI, if exists
+    node_id_sorted_xy_temp = []
     unfiltered_index_to_filtered_serial = dict() # not the serial. We do not need to know the serial
     filtered_serial_to_unfiltered_index = dict()
-    for i in range(0, len(node_id_sorted_xy)):        
-        unfiltered_index_to_filtered_serial[node_id_sorted_xy[i][0]] =  i # filtered means inside ROI if exists
-        filtered_serial_to_unfiltered_index[i] =  node_id_sorted_xy[i][0]
-        
+    active_node_count = 0
+    for i in range(0, len(node_id_sorted_xy)):
+        if node_id_sorted_xy[i][0] in nodes_active: # skip those which are not in our ROI
+            node_id_sorted_xy_temp.append(node_id_sorted_xy[i])
+            unfiltered_index_to_filtered_serial[node_id_sorted_xy[i][0]] =  active_node_count
+            filtered_serial_to_unfiltered_index[active_node_count] =  node_id_sorted_xy[i][0]
+            active_node_count = active_node_count + 1
+
+    node_id_sorted_xy = node_id_sorted_xy_temp
     ##################################################################################################################
     # split it into N set of edges
 
@@ -212,7 +213,7 @@ if __name__ == "__main__":
         print('layer %d'%layer)
         csv_record_dict = defaultdict(list)
         for run_time in range (start_index, start_index+total_runs):
-            filename_suffix = '_'+ 'r'+str(run_time) +'_' #str(run_time+1) +'_'
+            filename_suffix = '_'+ 'r'+str(run_time+1) +'_' #str(run_time+1) +'_'
             gc.collect()
             run = run_time
             print('run %d'%run)
@@ -270,10 +271,14 @@ if __name__ == "__main__":
             min_attention_score = 1000
             max_value = np.max(distribution)
             min_value = np.min(distribution)
-            distribution = []
             print('attention score is between %g to %g, total edges %d'%(np.min(distribution), np.max(distribution), len(distribution)))
+            distribution = []
             for i in range (0, datapoint_size):
+                if i not in attention_scores:
+                    continue
                 for j in range (0, datapoint_size):
+                    if j not in attention_scores[i]:
+                        continue
                     for k in range (0, len(attention_scores[i][j])):
                         attention_scores[i][j][k] = (attention_scores[i][j][k]-min_value)/(max_value-min_value)
                         scaled_score = attention_scores[i][j][k]
@@ -288,8 +293,12 @@ if __name__ == "__main__":
             threshold_down =  np.percentile(sorted(distribution), 0)
             threshold_up =  np.percentile(sorted(distribution), 100)
             connecting_edges = np.zeros((datapoint_size,datapoint_size))
-            for j in range (0, datapoint_size):
-                for i in range (0, datapoint_size):
+            for i in range (0, datapoint_size):
+                if i not in attention_scores:
+                    continue
+                for j in range (0, datapoint_size):
+                    if j not in attention_scores[i]:
+                        continue
                     atn_score_list = attention_scores[i][j]
                     for k in range (0, len(atn_score_list)):
                         if attention_scores[i][j][k] >= threshold_down and attention_scores[i][j][k] <= threshold_up: #np.percentile(sorted(distribution), 50):
@@ -344,6 +353,9 @@ if __name__ == "__main__":
                             
                     split_i = unfiltered_index_to_filtered_serial[i] 
                     split_j = unfiltered_index_to_filtered_serial[j]
+                    if split_i not in attention_scores or split_j not in attention_scores[split_i]:
+                        continue
+ 
                     atn_score_list = attention_scores[split_i][split_j]
                     for k in range (0, len(atn_score_list)):
                         if attention_scores[split_i][split_j][k] >= threshold_down and attention_scores[split_i][split_j][k] <= threshold_up: 
@@ -495,4 +507,3 @@ if __name__ == "__main__":
     df = pd.DataFrame(csv_record_final) # output 4
     df.to_csv(args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv', index=False, header=False)
     print('Result saved: '+args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv')
-
