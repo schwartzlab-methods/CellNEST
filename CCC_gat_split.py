@@ -1,6 +1,3 @@
-# Written By 
-# Fatema Tuz Zohora
-
 from scipy import sparse
 import pickle
 import numpy as np
@@ -12,42 +9,58 @@ from torch_geometric.nn import DeepGraphInfomax #Linear,
 from torch_geometric.data import Data, DataLoader
 import gzip
 import gc
-from GATv2Conv_CellNEST import GATv2Conv
+from GATv2Conv_NEST import GATv2Conv
 
 
 
-def get_split_graph(training_data, node_id_sorted, total_subgraphs): # use this if you don't want to save the split graph into disk due to space issue    
+
+def get_split_graph(training_data, node_id_sorted, total_subgraphs, expression_matrix_path=''): # use this if you don't want to save the split graph into disk due to space issue
+    
     fp = gzip.open(training_data, 'rb')  
     row_col, edge_weight, lig_rec, total_num_cell = pickle.load(fp)
     
     dict_cell_edge = defaultdict(list) # key = node. values = incoming edges
     dict_cell_neighbors = defaultdict(list) # key = node. value = nodes corresponding to incoming edges/neighbors
+
+
+    nodes_active = dict()
     for i in range(0, len(row_col)): 
         dict_cell_edge[row_col[i][1]].append(i) # index of the edges
         dict_cell_neighbors[row_col[i][1]].append(row_col[i][0]) # neighbor id
-
-
-
-    fp = gzip.open(node_id_sorted, 'rb')
-    node_id_sorted_xy = pickle.load(fp)
-    nodes_active = dict()
-    for i in range(0, len(node_id_sorted_xy)): 
-        nodes_active[node_id_sorted_xy[i][0]] = ''
-
-
+        nodes_active[row_col[i][1]] = '' # to 
+        nodes_active[row_col[i][0]] = '' # from
+    
+    
     datapoint_size = len(nodes_active.keys())
+    
     for i in range (0, datapoint_size):
         neighbor_list = dict_cell_neighbors[i]
         neighbor_list = list(set(neighbor_list))
         dict_cell_neighbors[i] = neighbor_list
     
     
+    fp = gzip.open(node_id_sorted, 'rb')
+    node_id_sorted_xy = pickle.load(fp)
+    
+    node_id_sorted_xy_temp = []
+    for i in range(0, len(node_id_sorted_xy)):
+        if node_id_sorted_xy[i][0] in nodes_active: # skip those which are not in our ROI
+            node_id_sorted_xy_temp.append(node_id_sorted_xy[i])
+    
+    node_id_sorted_xy = node_id_sorted_xy_temp    
     ##################################################################################################################
-    # one hot vector used as node feature vector
-    X = np.eye(datapoint_size, datapoint_size)
-    np.random.shuffle(X)
+
+    if expression_matrix_path == '':
+        # one hot vector used as node feature vector
+        X = np.eye(datapoint_size, datapoint_size)
+        np.random.shuffle(X)
+
+    else:
+        f = gzip.open(expression_matrix_path, 'rb')
+        X = pickle.load(f)
+
     X_data = X # node feature vector
-    num_feature = X_data.shape[0]
+    num_feature = X_data.shape[1]
     
     # split it into N set of edges
     
@@ -245,7 +258,7 @@ def corruption(data):
     return my_data(x, data.edge_index, data.edge_attr)
 
 
-def train_CellNEST(args, graph_bag, in_channels):
+def train_NEST(args, graph_bag, in_channels):
     """Add Statement of Purpose
     Args: [to be]
            
@@ -345,6 +358,8 @@ def train_CellNEST(args, graph_bag, in_channels):
                     X_attention_filename =  args.embedding_path + args.model_name + '_attention'+'_subgraph'+str(subgraph_id)
                     with gzip.open(X_attention_filename, 'wb') as fp:  
                         pickle.dump(X_attention_bundle, fp)
+
+                print('all saved')
                 ############################################################################################################################
                 logfile=open(args.model_path+'DGI_'+ args.model_name+'_loss_curve.csv', 'wb')
                 np.savetxt(logfile,loss_curve, delimiter=',')
