@@ -13,7 +13,7 @@ import gzip
 
 from GATv2Conv_CellNEST import GATv2Conv
 
-def get_graph(training_data):
+def get_graph(training_data, expression_matrix_path=''):
     """Add Statement of Purpose
     Args:
         training_data: Path to the input graph    
