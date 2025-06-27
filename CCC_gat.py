@@ -26,12 +26,17 @@ def get_graph(training_data, expression_matrix_path=''):
     row_col, edge_weight, lig_rec, num_cell = pickle.load(f)
     
     #print(edge_weight)
+    if expression_matrix_path == '':
+        # one hot vector used as node feature vector
+        X = np.eye(datapoint_size, datapoint_size)
+        np.random.shuffle(X)
 
-    # one hot vector used as node feature vector
-    X = np.eye(num_cell, num_cell)
-    np.random.shuffle(X)
+    else:
+        f = gzip.open(expression_matrix_path, 'rb')
+        X = pickle.load(f)
+
     X_data = X # node feature vector
-    num_feature = X_data.shape[0]
+    num_feature = X_data.shape[1]
     
     print('Node feature matrix: X has dimension ', X_data.shape)
     print("Total number of edges in the input graph is %d"%len(row_col))
