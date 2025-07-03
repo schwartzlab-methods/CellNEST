@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser.add_argument( '--data_name', type=str, help='Name of the dataset', required=True)  
     parser.add_argument( '--data_from', type=str, required=True, help='Path to the dataset to read from. Space Ranger outs/ folder is preferred. Otherwise, provide the *.mtx file of the gene expression matrix.')
     ################# default is set ################################################################
-    parser.add_argument( '--data_type', type=str, default='visium_dir', help='Set one of these two types [visium_dir, anndata]')
+    parser.add_argument( '--data_type', type=str, default='visium', help='Set one of these two types [visium, anndata]')
     parser.add_argument( '--data_to', type=str, default='input_graph/', help='Path to save the input graph (to be passed to GAT)')
     parser.add_argument( '--metadata_to', type=str, default='metadata/', help='Path to save the metadata')
     parser.add_argument( '--filter_min_cell', type=int, default=1 , help='Minimum number of cells for gene filtering') 
