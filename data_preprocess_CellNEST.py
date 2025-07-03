@@ -55,7 +55,7 @@ if __name__ == "__main__":
         os.makedirs(args.metadata_to)
         
     ####### get the gene id, cell barcode, cell coordinates ######
-    print('Input data reading')
+    print('Input data reading') 
     if args.tissue_position_file == 'None': # Data is available in Space Ranger output format
         if args.data_type == 'visium':
             adata_h5 = sc.read_visium(path=args.data_from, count_file='filtered_feature_bc_matrix.h5')
