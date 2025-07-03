@@ -72,7 +72,7 @@ if __name__ == "__main__":
             temp = qnorm.quantile_normalize(np.transpose(sparse.csr_matrix.toarray(adata_h5.X)))  #https://en.wikipedia.org/wiki/Quantile_normalization
             cell_vs_gene = np.transpose(temp)
         elif args.data_type == 'anndata':
-   	        adata_h5 = sc.read_h5ad(args.data_from)
+            adata_h5 = sc.read_h5ad(args.data_from)
             print('input data read done')
             gene_count_before = len(list(adata_h5.var_names))    
             sc.pp.filter_genes(adata_h5, min_cells=args.filter_min_cell)
