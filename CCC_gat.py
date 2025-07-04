@@ -24,7 +24,8 @@ def get_graph(training_data, expression_matrix_path=''):
     
     f = gzip.open(training_data , 'rb')
     row_col, edge_weight, lig_rec, num_cell = pickle.load(f)
-    
+
+    datapoint_size = num_cell
     #print(edge_weight)
     if expression_matrix_path == '':
         # one hot vector used as node feature vector
