@@ -15,9 +15,11 @@ import gzip
 import argparse
 import os
 import scanpy as sc
+import json
+from sklearn.metrics.pairwise import euclidean_distances
 
 print('user input reading')
-#current_dir = 
+ 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     ################## Mandatory ####################################################################
@@ -30,20 +32,17 @@ if __name__ == "__main__":
     parser.add_argument( '--filter_min_cell', type=int, default=1 , help='Minimum number of cells for gene filtering') 
     parser.add_argument( '--threshold_gene_exp', type=float, default=98, help='Threshold percentile for gene expression. Genes above this percentile are considered active.')
     parser.add_argument( '--tissue_position_file', type=str, default='None', help='If your --data_from argument points to a *.mtx file instead of Space Ranger, then please provide the path to tissue position file.')
-    parser.add_argument( '--spot_diameter', type=float, default=89.43, help='Spot/cell diameter for filtering ligand-receptor pairs based on cell-cell contact information. Should be provided in the same unit as spatia data (for Visium, that is pixel).')
-    parser.add_argument( '--split', type=int, default=0 , help='How many split sections?') 
-    parser.add_argument( '--distance_measure', type=str, default='fixed_threshold' , help='Set neighborhood cutoff criteria from [knn, fixed_threshold]')
-    parser.add_argument( '--k', type=int, default=50 , help='Set neighborhood cutoff number')    
-    parser.add_argument( '--neighborhood_threshold', type=float, default=0 , help='Set neighborhood threshold distance in terms of same unit as spot diameter') 
+    parser.add_argument( '--juxtacrine_distance', type=float, default=-1, help='Distance for filtering ligand-receptor pairs based on cell-cell contact information. Automatically calculated unless provided. It has the same unit as the coordinates (for Visium, that is pixel).')
+    parser.add_argument( '--split', type=int, default=0 , help='Set to 1 if you plan to run training by splitting the input graph into multiple subgraphs') 
+    parser.add_argument( '--distance_measure', type=str, default='fixed' , help='Set neighborhood cutoff criteria. Choose from [knn, fixed]')
+    parser.add_argument( '--k', type=int, default=50 , help='Set neighborhood cutoff number. This will be used if --distance_measure=knn')    
+    parser.add_argument( '--neighborhood_threshold', type=float, default=0 , help='Set neighborhood threshold distance in terms of same unit as the coordinates') 
     parser.add_argument( '--block_autocrine', type=int, default=0 , help='Set to 1 if you want to ignore autocrine signals.') 
-    parser.add_argument( '--no_filter_juxtacrine', type=int, default=0, help='Set to 1 if you want no filtering for juxtacrine signals.')     
+    parser.add_argument( '--block_juxtacrine', type=int, default=0, help='Set to 1 if you want to ignore juxtacrine signals.')     
     parser.add_argument( '--database_path', type=str, default='database/CellNEST_database.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database.') 
     
     args = parser.parse_args()
     
-    if args.neighborhood_threshold == 0:
-        args.neighborhood_threshold = args.spot_diameter*4
-
     if args.data_to == 'input_graph/':
         args.data_to = args.data_to + args.data_name + '/'
     if not os.path.exists(args.data_to):
@@ -55,7 +54,7 @@ if __name__ == "__main__":
         os.makedirs(args.metadata_to)
         
     ####### get the gene id, cell barcode, cell coordinates ######
-    print('Input data reading') 
+    print('Input data reading')
     if args.tissue_position_file == 'None': # Data is available in Space Ranger output format
         if args.data_type == 'visium':
             adata_h5 = sc.read_visium(path=args.data_from, count_file='filtered_feature_bc_matrix.h5')
@@ -71,6 +70,13 @@ if __name__ == "__main__":
             print('Applying quantile normalization')
             temp = qnorm.quantile_normalize(np.transpose(sparse.csr_matrix.toarray(adata_h5.X)))  #https://en.wikipedia.org/wiki/Quantile_normalization
             cell_vs_gene = np.transpose(temp)
+            ####### use the spot diameter as the --juxtacrine_distance
+            if args.juxtacrine_distance == -1:
+                file = open(args.data_from+'/spatial/scalefactors_json.json', 'r')
+                data = json.load(file)
+                spot_diameter = data["spot_diameter_fullres"]
+                args.juxtacrine_distance = spot_diameter
+
         elif args.data_type == 'anndata':
             adata_h5 = sc.read_h5ad(args.data_from)
             print('input data read done')
@@ -116,7 +122,6 @@ if __name__ == "__main__":
         
     
     
-    
     ##################### make metadata: barcode_info ###################################
     i=0
     barcode_info=[]
@@ -135,15 +140,39 @@ if __name__ == "__main__":
         gene_index[gene] = i
         i = i+1
         
+
+
+    # build physical distance matrix
+    distance_matrix = euclidean_distances(coordinates, coordinates)
+    #### then automatically calculate the distance between two nodes #########
+    sorted_first_row = np.sort(distance_matrix[0,:])
+    if args.neighborhood_threshold == 0:
+        distance_a_b = sorted_first_row[1]
+        args.neighborhood_threshold = distance_a_b * 4 # 4 times the distance between two nodes
+
+    if args.distance_measure == 'fixed':
+        print('Neighborhood distance is set to be %g (same unit as the coordinates)'%(args.neighborhood_threshold))
+    else:
+        print('Neighborhood distance is set to be %d nearest neighbors'%args.k)
+
+
+    #### automatically set the args.juxtacrine_distance ############
+    if args.juxtacrine_distance == -1: 
+        args.juxtacrine_distance = sorted_first_row[1]
+
+    if args.block_juxtacrine == 0:
+        print("Auto calculated juxtacrine distance is %g. To change it use --juxtacrine_distance"%args.juxtacrine_distance)
+    #### sort the nodes in the ascending order of x and y coordinates ####################
+    i=0
+    node_id_sorted_xy=[]
+    for cell_code in cell_barcode:
+        node_id_sorted_xy.append([i, coordinates[i,0],coordinates[i,1]])
+        i=i+1
+
+    node_id_sorted_xy = sorted(node_id_sorted_xy, key = lambda x: (x[1], x[2]))
+    
     #### needed if split data is used ##############
     if args.split>0:
-        i=0
-        node_id_sorted_xy=[]
-        for cell_code in cell_barcode:
-            node_id_sorted_xy.append([i, coordinates[i,0],coordinates[i,1]])
-            i=i+1
-        	
-        node_id_sorted_xy = sorted(node_id_sorted_xy, key = lambda x: (x[1], x[2]))
         with gzip.open(args.metadata_to + args.data_name+'_'+'node_id_sorted_xy', 'wb') as fp:  #b, a:[0:5]   
         	pickle.dump(node_id_sorted_xy, fp)
     
@@ -181,7 +210,6 @@ if __name__ == "__main__":
             cell_cell_contact[receptor] = '' # keep track of which ccc are labeled as cell-cell-contact
     
     
-    
     print('number of ligands %d '%len(ligand_dict_dataset.keys()))
     
     included_gene=[]
@@ -201,12 +229,8 @@ if __name__ == "__main__":
             l_r_pair[gene][receptor_gene] = lr_id 
             lr_id  = lr_id  + 1
         
-    print('number of ligand-receptor pairs in this dataset %d '%lr_id) 
+    print('number of ligand-receptor pairs in this dataset %d '%lr_id)     
     ###################################################################################
-    # build physical distance matrix
-    from sklearn.metrics.pairwise import euclidean_distances
-    distance_matrix = euclidean_distances(coordinates, coordinates)
-    
     # assign weight to the neighborhood relations based on neighborhood distance 
     dist_X = np.zeros((distance_matrix.shape[0], distance_matrix.shape[1]))
     for j in range(0, distance_matrix.shape[1]): # look at all the incoming edges to node 'j'
@@ -214,10 +238,10 @@ if __name__ == "__main__":
         min_value=np.min(distance_matrix[:,j]) # min distance of node 'j' to all it's neighbors (incoming)
         for i in range(distance_matrix.shape[0]):
             dist_X[i,j] = 1-(distance_matrix[i,j]-min_value)/(max_value-min_value) # scale the distance of node 'j' to all it's neighbors (incoming) and flip it so that nearest one will have maximum weight.
-
+            	
         if args.distance_measure=='knn':
             list_indx = list(np.argsort(dist_X[:,j]))
-            k_higher = list_indx[len(list_indx)-k_nn:len(list_indx)]
+            k_higher = list_indx[len(list_indx)-args.k:len(list_indx)]
             for i in range(0, distance_matrix.shape[0]):
                 if i not in k_higher:
                     dist_X[i,j] = 0 #-1
@@ -226,6 +250,15 @@ if __name__ == "__main__":
                 if distance_matrix[i,j] > args.neighborhood_threshold: #i not in k_higher:
                     dist_X[i,j] = 0 # no ccc happening outside threshold distance
     
+
+
+
+        #list_indx = list(np.argsort(dist_X[:,j]))
+        #k_higher = list_indx[len(list_indx)-k_nn:len(list_indx)]
+        for i in range(0, distance_matrix.shape[0]):
+            if distance_matrix[i,j] > args.neighborhood_threshold: #i not in k_higher:
+                dist_X[i,j] = 0 # no ccc happening outside threshold distance
+                
     #cell_rec_count = np.zeros((cell_vs_gene.shape[0]))
     #####################################################################################
     # Set threshold gene percentile
@@ -265,13 +298,13 @@ if __name__ == "__main__":
                 continue
             
             for j in range (0, cell_vs_gene.shape[0]): # receptor
-                if dist_X[i,j]==0: #distance_matrix[i,j] >= args.neighborhood_threshold: #spot_diameter*4
+                if dist_X[i,j]==0: 
                     continue
                 if args.block_autocrine == 1 and i==j:
                     continue
                 for gene_rec in ligand_dict_dataset[gene]:
                     if cell_vs_gene[j][gene_index[gene_rec]] >= cell_percentile[j]: # or cell_vs_gene[i][gene_index[gene]] >= cell_percentile[i][4] :#gene_list_percentile[gene_rec][1]: #global_percentile: #
-                        if args.no_filter_juxtacrine==0 and (gene_rec in cell_cell_contact and distance_matrix[i,j] > args.spot_diameter):
+                        if (gene_rec in cell_cell_contact) and (args.block_juxtacrine==1 or distance_matrix[i,j] > args.juxtacrine_distance):
                             continue
     
                         communication_score = cell_vs_gene[i][gene_index[gene]] * cell_vs_gene[j][gene_index[gene_rec]]
@@ -284,9 +317,9 @@ if __name__ == "__main__":
                         cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
                         count_total_edges = count_total_edges + 1
                         
-        print('%d genes done out of %d ligand genes'%(g+1, len(ligand_list)))
+        print('%d/%d ligand genes processed'%(g+1, len(ligand_list)), end='\r')
     
-    
+    print('')    
     #print('total number of edges in the input graph %d '%count_total_edges)
     ################################################################################
     # input graph generation
