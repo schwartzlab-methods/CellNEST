@@ -1,22 +1,18 @@
+  GNU nano 5.6.1                                                                                                                to_anndata.py                                                                                                                          
 # Written By 
 # Fatema Tuz Zohora
 
 
 print('package loading')
 import numpy as np
-import pickle
 from scipy import sparse
-import numpy as np
-import qnorm
 from scipy.sparse import csr_matrix
-from collections import defaultdict
 import pandas as pd
 import gzip
 import argparse
 import os
 import scanpy as sc
-import json
-from sklearn.metrics.pairwise import euclidean_distances
+import anndata
 
 print('user input reading')
  
@@ -55,8 +51,9 @@ if __name__ == "__main__":
     adata.var_names = gene_ids
     adata.obsm['spatial'] = coordinates
     # save it
-    if 'h5ad' not in filename:
-        filename = filename + '.h5ad'
-      
-    adata.write(args.data_to+'/'+ filename, compression="gzip")
+    if 'h5ad' not in args.file_name:
+        args.file_name = args.file_name + '.h5ad'
+
+    adata.write(args.data_to_path + '/' + args.file_name, compression="gzip")
     print('file write done')  
+
