@@ -44,3 +44,5 @@ If you are using singularity image, then preceed the above commands with
 ```
 singularity run  --nv --home=<path to the directory having container image>  nest_image.sif
 ```
+
+Details of each of the above steps, including various parameters and generated file locations and outputs, are provided in earlier vignettes. 
