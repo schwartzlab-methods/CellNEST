@@ -14,7 +14,7 @@ model training through split option in the next step.
 ```
 ./cellnest preprocess --data_name=LUAD_TD1_split --data_type=anndata --data_from=data/LUAD/LUAD_GSM5702473_TD1/LUAD_GSM5702473_TD1.h5ad --split=1 
 ```
-NOTE: If you are using single-cell resolution data, please use --distance_measure='knn',  --k=50 (default) in the above preprocessing step. 
+**NOTE**: If you are using single-cell resolution data, please use --distance_measure='knn',  --k=50 (default) in the above preprocessing step. 
 Depending on your context, you may also use these additional parameters for greater accuracy: --juxtacrine_distance, --block_autocrine, --block_juxtacrine.
 (These parameters are all used in script in data_preprocess_CellNEST.py)
 
