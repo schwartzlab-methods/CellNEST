@@ -12,6 +12,10 @@ elif [ $1 = "postprocess" ]
 then
   shift
   python output_postprocess_CellNEST.py $@
+elif [ $1 = "postprocess_split" ] 
+then
+  shift
+  python output_postprocess_CellNEST_split.py $@
 elif [ $1 = "visualize" ] 
 then
   shift
