@@ -325,7 +325,7 @@ if __name__ == "__main__":
                     index_dict[i] = id_label
                     id_label = id_label+1
         
-            print('number of components with multiple datapoints is %d'%id_label)
+            #print('number of components with multiple datapoints is %d'%id_label)
         
         
             for i in range (0, len(barcode_info)): 
@@ -334,7 +334,7 @@ if __name__ == "__main__":
                 split_i = unfiltered_index_to_filtered_serial[i]
                 if count_points_component[labels[split_i]] > 1:
                     barcode_info[i][3] = index_dict[labels[split_i]] #2
-                elif connecting_edges[split_i][split_i] == 1 and (i in lig_rec_dict and i in lig_rec_dict[i][i] and len(lig_rec_dict[i][i])>0): 
+                elif connecting_edges[split_i][split_i] == 1 and (i in lig_rec_dict and i in lig_rec_dict[i] and len(lig_rec_dict[i][i])>0): 
                     barcode_info[i][3] = 1
                 else:
                     barcode_info[i][3] = 0
