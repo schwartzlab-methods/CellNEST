@@ -38,6 +38,9 @@ Then the visualization step does not need any split information since all the su
 ```
 ./cellnest visualize --data_name='LUAD_TD1_split' --model_name="CellNEST_LUAD_TD1_split" --top_edge_count=5000
 ```
+It generates the component plots and histograms as follows:
+![](../images/component_luad_split.png)
+![](../images/histograms_luad_split.png)
 
 
 If you are using singularity image, then preceed the above commands with 
