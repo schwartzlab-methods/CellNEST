@@ -26,7 +26,6 @@ if __name__ == "__main__":
     parser.add_argument( '--data_from', type=str, help='Name of the file with path', required=True)  
     parser.add_argument( '--data_to_path', type=str, help='Path to save the dataset in anndata format', required=True)
     parser.add_argument( '--file_name', type=str, help='File name to save the dataset in anndata format', required=True)
-    ################# optional ################################################################
     parser.add_argument( '--tissue_position_file', type=str, default='None', help='If your data in --data_from \
     does not have coordinates, then please provide the path to tissue position file.')
    
