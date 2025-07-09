@@ -29,7 +29,7 @@ can be hundreds of thousands of cells.
  
 ```
 
-Then we do the output post-processing using --total_subgraphs=4 as follows:
+Then we do the output post-processing using command "postprocess_split" and parameter --total_subgraphs=4 as follows:
 ```
 cellnest postprocess_split --data_name='LUAD_TD1_split' --model_name="CellNEST_LUAD_TD1_split" --total_runs=3 --total_subgraphs=4
 ```
