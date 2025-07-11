@@ -132,7 +132,8 @@ For a detailed explanation of the available parameters and their usage, please s
 3. [Running the CellNEST model through singularity image](vignette/running_CellNEST_singularity_container.md)
 4. [Running CellNEST with "split" option in case of very high number of cells (single-cell resolution, Visium HD, Xenium, MERFISH, etc.) or low GPU memory issue](vignette/split_graph_option.md)
 5. [CellNEST on deconvoluted Spatial Transcriptomics data](vignette/deconvolute_ST.md) 
-6. [CellNEST on MERFISH data after gene imputation using scRNA-seq data](vignette/integrate_scRNAseq_merfish.md) 
+6. [CellNEST on MERFISH data after gene imputation using scRNA-seq data](vignette/integrate_scRNAseq_merfish.md)
+7. [Convert ST data in any format to anndata for easy manipulation by CellNEST](vignette/convert_to_anndata.md)
 
    
     
