@@ -1,4 +1,5 @@
-We will use LUAD sample for explaining the split graph option. LUAD sample is provided in a non-Visium format. 
+We run CellNEST with "split" option in case of very high number of cells (single-cell resolution, Visium HD, Xenium, MERFISH, etc.) 
+or low GPU memory issue. We will use LUAD sample for explaining the split graph option. LUAD sample is provided in a non-Visium format. 
 In such cases, it is recommended to convert the format to anndata. Let us assume we have downloaded the LUAD sample
 into a directory "CellNEST/data/LUAD_GSM5702473_TD1/". It comes as a *mtx format, so following script can be run to convert it 
 to anndata format (assuming that your current working directory is CellNEST):
