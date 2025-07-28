@@ -1,4 +1,4 @@
-We provide the arguments for running various steps of CellCellNEST model along with the preferred values as Default. Most of the arguments are self-explanatory. The parameters that may need changing are discussed. 
+We provide the arguments for running various steps of CellNEST model along with the preferred values as Default. Most of the arguments are self-explanatory. The parameters that may need changing are discussed. 
 
 ## Data Preprocess 
 Sample command:
@@ -13,7 +13,7 @@ cellnest preprocess --data_name='V1_Human_Lymph_Node_spatial' --data_from='data/
     --filter_min_cell = Minimum number of cells for gene filtering. Type is Int. Default=1. 
     --threshold_gene_exp = Threshold percentile for gene expression. Genes above this percentile are considered active. Type is float. Default=98
     --tissue_position_file = If your --data_from argument points to a *.mtx file instead of Space Ranger, then please provide the path to tissue position file. Type is String. Default='None'
-    --spot_diameter = Spot/cell diameter for filtering ligand-receptor pairs based on cell-cell contact information. Should be provided in the same unit as spatia data (for Visium, that is pixel). Type is float. Default=89.43
+    --juxtacrine_distance = Distance for filtering ligand-receptor pairs based on cell-cell contact information. Automatically calculated unless provided. It has the same unit as the coordinates (for Visium, that is pixel). (In past, this was called spot_diameter). Type is Float. Default = -1
     --split = How many split sections? Type is Int. Default=0. 
     --neighborhood_threshold = Set neighborhood threshold distance in terms of same unit as spot diameter. Type is float. If not set, then it is set to four times of the spot diameter.
     --database_path = Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database. Type is String. Default='database/CellNEST_database.csv'
