@@ -15,7 +15,7 @@ the anndata has following rows and columns, as well as, spatial coordinates:
     adata.obsm['spatial'] = coordinates
 ```
 
-
+Please note that the count matrix (.X field of AnnData) should have raw counts, without any normalization or transformation. 
 After that, we will run preprocessing step with **--data_type=anndata** parameter as follows:
 
 ```
