@@ -7,10 +7,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import DeepGraphInfomax #Linear, 
 from torch_geometric.data import Data, DataLoader
+#from torch_sparse import SparseTensor
 import gzip
 import gc
-from GATv2Conv_CellNEST import GATv2Conv
-
+from GATv2Conv_NEST import GATv2Conv
+from scipy.sparse import csr_matrix
 
 
 
@@ -52,15 +53,16 @@ def get_split_graph(training_data, node_id_sorted, total_subgraphs, expression_m
 
     if expression_matrix_path == '':
         # one hot vector used as node feature vector
-        X = np.eye(datapoint_size, datapoint_size)
+        #X = np.eye(datapoint_size, datapoint_size)
+        #np.random.shuffle(X)
+        X = np.arange(datapoint_size)        
         np.random.shuffle(X)
+        num_feature = datapoint_size
 
     else:
         f = gzip.open(expression_matrix_path, 'rb')
         X = pickle.load(f)
-
-    X_data = X # node feature vector
-    num_feature = X_data.shape[1]
+        num_feature = X.shape[1]
     
     # split it into N set of edges
     
@@ -139,9 +141,12 @@ def get_split_graph(training_data, node_id_sorted, total_subgraphs, expression_m
         X_data = np.zeros((num_cell, datapoint_size))
         spot_id = 0
         for spot in spot_list:
-            X_data[spot_id] = X[spot,:]
+            #X_data[spot_id] = X[spot,:]
+            one_column_position = X[spot]
+            X_data[spot_id, one_column_position] = 1
             spot_id = spot_id + 1    
         
+
         row_col_temp = []
         edge_weight_temp = []
         for i in range (0, len(set1_edges)):
@@ -149,8 +154,11 @@ def get_split_graph(training_data, node_id_sorted, total_subgraphs, expression_m
             edge_weight_temp.append(set1_edges[i][1])
     
         print("subgraph %d: number of nodes %d, each having feature dimension %d. Total number of edges %d"%(set_id, num_cell, num_feature, len(row_col_temp)))
-
+        
+        
         X_data = torch.tensor(X_data, dtype=torch.float)
+        X_data = X_data.to_sparse()
+        
         edge_index = torch.tensor(np.array(row_col_temp), dtype=torch.long).T
         edge_attr = torch.tensor(np.array(edge_weight_temp), dtype=torch.float)
         
@@ -254,11 +262,16 @@ def corruption(data):
 
     """
     #print('inside corruption function')
+    #print(data.x)
+
+    data.x = data.x.to_dense()
     x = data.x[torch.randperm(data.x.size(0))]
+    x = x.to_sparse()
+    gc.collect()
     return my_data(x, data.edge_index, data.edge_attr)
 
 
-def train_CellNEST(args, graph_bag, in_channels):
+def train_NEST(args, graph_bag, in_channels):
     """Add Statement of Purpose
     Args: [to be]
            
@@ -289,7 +302,7 @@ def train_CellNEST(args, graph_bag, in_channels):
     print('Saving init model state ...')
     torch.save(DGI_model.state_dict(), args.model_path+'DGI_init'+ args.model_name  + '.pth.tar')
     torch.save(DGI_optimizer.state_dict(), args.model_path+'DGI_optimizer_init'+ args.model_name  + '.pth.tar')
-    #print('training starts ...')
+    print('training starts ...')
     for epoch in range(args.num_epoch):
         DGI_model.train()
         DGI_optimizer.zero_grad()
