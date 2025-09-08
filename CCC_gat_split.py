@@ -179,7 +179,7 @@ def get_graph(training_data): # use this if you already have saved the split gra
         List of torch_geometric.data.Data type: Contains the input graph
         Integer: Dimension of node embedding
     """
-    
+     
     f = gzip.open(training_data , 'rb')
     graph_bag, num_feature = pickle.load(f)
     
