@@ -10,7 +10,7 @@ from torch_geometric.data import Data, DataLoader
 #from torch_sparse import SparseTensor
 import gzip
 import gc
-from GATv2Conv_NEST import GATv2Conv
+from GATv2Conv_CellNEST import GATv2Conv
 from scipy.sparse import csr_matrix
 
 
@@ -271,7 +271,7 @@ def corruption(data):
     return my_data(x, data.edge_index, data.edge_attr)
 
 
-def train_NEST(args, graph_bag, in_channels):
+def train_CellNEST(args, graph_bag, in_channels):
     """Add Statement of Purpose
     Args: [to be]
            
@@ -326,7 +326,7 @@ def train_NEST(args, graph_bag, in_channels):
             if np.mean(DGI_all_loss)<min_loss:
 
                 min_loss=np.mean(DGI_all_loss)
-
+                print('min loss found!!')
                 # save the current model state
                 torch.save(DGI_model.state_dict(), DGI_filename)
                 torch.save(DGI_optimizer.state_dict(), args.model_path+'DGI_optimizer_'+ args.model_name  +'.pth.tar')
@@ -371,12 +371,13 @@ def train_NEST(args, graph_bag, in_channels):
                     X_attention_filename =  args.embedding_path + args.model_name + '_attention'+'_subgraph'+str(subgraph_id)
                     with gzip.open(X_attention_filename, 'wb') as fp:  
                         pickle.dump(X_attention_bundle, fp)
+                    print('saved')
 
                 print('all saved')
                 ############################################################################################################################
-                logfile=open(args.model_path+'DGI_'+ args.model_name+'_loss_curve.csv', 'wb')
-                np.savetxt(logfile,loss_curve, delimiter=',')
-                logfile.close()
+            logfile=open(args.model_path+'DGI_'+ args.model_name+'_loss_curve.csv', 'wb')
+            np.savetxt(logfile,loss_curve, delimiter=',')
+            logfile.close()
 
                 #print(DGI_model.encoder.attention_scores_mine_unnormalized_l1[0:10])
 
