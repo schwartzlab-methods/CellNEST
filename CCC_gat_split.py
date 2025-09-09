@@ -330,7 +330,7 @@ def train_CellNEST(args, graph_bag, in_channels):
                 # save the current model state
                 torch.save(DGI_model.state_dict(), DGI_filename)
                 torch.save(DGI_optimizer.state_dict(), args.model_path+'DGI_optimizer_'+ args.model_name  +'.pth.tar')
-                save_tupple=[pos_z, neg_z, summary] 
+                # save_tupple=[pos_z, neg_z, summary] 
                 ############################################################################################################
                 subgraph_id = -1
                 for subgraph in graph_bag:
@@ -388,12 +388,13 @@ def train_CellNEST(args, graph_bag, in_channels):
 
 #        torch.save(DGI_model.state_dict(), DGI_filename)
     print('Training time in seconds: ', (end_time-start_time).seconds)
+    """
     DGI_model.load_state_dict(torch.load(DGI_filename))
     print("debug loss")
     DGI_loss = DGI_model.loss(pos_z, neg_z, summary)
     print("debug loss latest tupple %g"%DGI_loss.item())
     DGI_loss = DGI_model.loss(save_tupple[0], save_tupple[1], save_tupple[2])
     print("debug loss min loss tupple %g"%DGI_loss.item())
-
+    """
     return DGI_model
 
