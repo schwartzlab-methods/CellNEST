@@ -71,18 +71,23 @@ if __name__ == "__main__":
     
     
     datapoint_size = total_num_cell
-    lig_rec_dict = []
-    for i in range (0, datapoint_size):
-        lig_rec_dict.append([])  
-        for j in range (0, datapoint_size):	
-            lig_rec_dict[i].append([])   
-            lig_rec_dict[i][j] = []
-    
+    lig_rec_dict = defaultdict(dict)    
     for index in range (0, len(row_col)):
             i = row_col[index][0]
             j = row_col[index][1]
-            lig_rec_dict[i][j].append(lig_rec[index])  
-    
+            if i in lig_rec_dict:
+                if j in lig_rec_dict[i]:
+                    lig_rec_dict[i][j].append(lig_rec[index]) 
+                else:
+                    lig_rec_dict[i][j] = []
+                    lig_rec_dict[i][j].append(lig_rec[index])
+            else:
+                lig_rec_dict[i][j] = []
+                lig_rec_dict[i][j].append(lig_rec[index])                
+
+      
+
+
     row_col = 0
     edge_weight = 0
     lig_rec = 0
@@ -113,14 +118,9 @@ if __name__ == "__main__":
             gc.collect()
             run = run_time
             print('run %d'%run)
-    
-            attention_scores = []
-            for i in range (0, datapoint_size):
-                attention_scores.append([])   
-                for j in range (0, datapoint_size):	
-                    attention_scores[i].append([])   
-                    attention_scores[i][j] = []
-    
+            attention_scores = defaultdict(dict) 
+
+
             distribution = []
             ##############################################
             print(args.model_name)     
@@ -145,6 +145,10 @@ if __name__ == "__main__":
                 i = X_attention_bundle[0][0][index]
                 j = X_attention_bundle[0][1][index]
                 scaled_score = (X_attention_bundle[l][index][0]-min_value)/(max_value-min_value)
+                if i not in attention_scores or j not in attention_scores[i]:
+                    attention_scores[i][j]=[]                
+
+
                 attention_scores[i][j].append(scaled_score) 
                 if min_attention_score > scaled_score:
                     min_attention_score = scaled_score
@@ -159,9 +163,10 @@ if __name__ == "__main__":
             threshold_down =  np.percentile(sorted(distribution), 0)
             threshold_up =  np.percentile(sorted(distribution), 100)
             connecting_edges = np.zeros((len(barcode_info),len(barcode_info)))
-            for j in range (0, datapoint_size):
+
+            for i in attention_scores.keys():
                 #threshold =  np.percentile(sorted(attention_scores[:,j]), 97) #
-                for i in range (0, datapoint_size):
+                for j in attention_scores[i].keys():
                     atn_score_list = attention_scores[i][j]
                     #print(len(atn_score_list))
                     #s = min(0,len(atn_score_list)-1)
@@ -197,7 +202,7 @@ if __name__ == "__main__":
             #    if barcode_info[i][0] in barcode_label:
                 if count_points_component[labels[i]] > 1:
                     barcode_info[i][3] = index_dict[labels[i]] #2
-                elif connecting_edges[i][i] == 1 and len(lig_rec_dict[i][i])>0: 
+                elif connecting_edges[i][i] == 1 and (i in lig_rec_dict and i in lig_rec_dict[i] and len(lig_rec_dict[i][i])>0): 
                     barcode_info[i][3] = 1
                 else:
                     barcode_info[i][3] = 0
@@ -209,14 +214,13 @@ if __name__ == "__main__":
             ###############
             csv_record = []
             csv_record.append(['from_cell', 'to_cell', 'ligand', 'receptor', 'attention_score', 'component', 'from_id', 'to_id'])
-            for j in range (0, len(barcode_info)):
-                for i in range (0, len(barcode_info)):
-                    
+            for i in attention_scores.keys():
+                for j in attention_scores[i].keys():                                
                     if i==j:
-                        if len(lig_rec_dict[i][j])==0:
+                        if (i not in lig_rec_dict or j not in lig_rec_dict[i]):
                             continue # because the model generates some score for selfloop even if there was no user input
                                     # to prevent losing own information
-                     
+
                     atn_score_list = attention_scores[i][j]
                     for k in range (0, len(atn_score_list)):
                         if attention_scores[i][j][k] >= threshold_down and attention_scores[i][j][k] <= threshold_up: 
@@ -235,7 +239,7 @@ if __name__ == "__main__":
                 # i-j-ligandGene-receptorGene
                 csv_record_dict[key_value].append([csv_record[i][4], run])
                 
-        '''    
+        """    
         for key_value in csv_record_dict.keys():
             run_dict = defaultdict(list)
             for scores in csv_record_dict[key_value]: # entry count = total_runs 
@@ -248,7 +252,7 @@ if __name__ == "__main__":
             csv_record_dict[key_value] = [] # make it blank
             for runs in run_dict.keys(): # has just one mean value for the attention score
                 csv_record_dict[key_value].append([run_dict[runs],runs]) # [score, 0]
-        '''
+        """
         ########## All runs combined. Now find rank product #############################
         
         all_edge_list = []
@@ -483,14 +487,14 @@ if __name__ == "__main__":
 
     # write the skewness and MAD value in a text file
     # Opening a file
-    '''
+    """
     file1 = open(args.output_path + args.model_name+'_statistics.txt', 'w')
     L = ["Median Absolute Deviation (MAD):"+str(MAD)+"\n", "Skewness: "+str(skewness_distribution) +" \n"]    
     # Writing multiple strings
     file1.writelines(L)
     # Closing file
     file1.close()
-    ''' 
+    """ 
     
 
  
