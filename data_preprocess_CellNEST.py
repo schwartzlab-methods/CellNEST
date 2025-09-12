@@ -321,14 +321,14 @@ if __name__ == "__main__":
     
     for g in range(start_index, end_index): 
         gene = ligand_list[g]
-        for i in range (0, cell_vs_gene.shape[0]): # ligand
-              
+        #for i in range (0, cell_vs_gene.shape[0]): # ligand
+        for i in weightdict_i_to_j.keys():
             if cell_vs_gene[i][gene_index[gene]] < cell_percentile[i]:
                 continue
-            
-            for j in range (0, cell_vs_gene.shape[0]): # receptor
-                if i not in weightdict_i_to_j or j not in weightdict_i_to_j[i]: #dist_X[i,j]==0: 
-                    continue
+            for j in weightdict_i_to_j[i].keys():
+            #for j in range (0, cell_vs_gene.shape[0]): # receptor
+                #if i not in weightdict_i_to_j or j not in weightdict_i_to_j[i]: #dist_X[i,j]==0: 
+                #    continue
                 if args.block_autocrine == 1 and i==j:
                     continue
                 for gene_rec in ligand_dict_dataset[gene]:
