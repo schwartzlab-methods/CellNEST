@@ -8,7 +8,7 @@ import pickle
 from scipy import sparse
 import numpy as np
 import qnorm
-#from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix
 from collections import defaultdict
 import pandas as pd
 import gzip
@@ -19,7 +19,6 @@ import json
 import gc
 from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics.pairwise import euclidean_distances
-
 print('user input reading')
  
 if __name__ == "__main__":
@@ -88,7 +87,7 @@ if __name__ == "__main__":
             print('Gene filtering done. Number of genes reduced from %d to %d'%(gene_count_before, gene_count_after))
             gene_ids = list(adata_h5.var_names)
             coordinates = adata_h5.obsm['spatial']
-            cespacell_barcode = np.array(adata_h5.obs_names) #obs.index)
+            cell_barcode = np.array(adata_h5.obs_names) #obs.index)
             print('Number of barcodes: %d'%cell_barcode.shape[0])
             print('Applying quantile normalization')
             temp = qnorm.quantile_normalize(np.transpose(sparse.csr_matrix.toarray(adata_h5.X)))  #https://en.wikipedia.org/wiki/Quantile_normalization
@@ -123,7 +122,7 @@ if __name__ == "__main__":
             coordinates[i,1] = barcode_vs_xy[cell_barcode[i]][1]
         
     
-    
+    #print(euclidean_distances(coordinates[0:1],coordinates[2:3]))
     ##################### make metadata: barcode_info ###################################
     i=0
     barcode_info=[]
@@ -149,7 +148,6 @@ if __name__ == "__main__":
     if args.distance_measure == 'fixed':
         # then you need to set the args.neighborhood_threshold
         if args.neighborhood_threshold == 0:
-            from sklearn.metrics.pairwise import euclidean_distances
             distance_matrix = euclidean_distances(coordinates, coordinates)
             #### then automatically calculate the min distance between two nodes #########
             sorted_first_row = np.sort(distance_matrix[0,:])
@@ -219,6 +217,12 @@ if __name__ == "__main__":
     #cell_rec_count = np.zeros((cell_vs_gene.shape[0]))
 
 
+    #### automatically set the args.juxtacrine_distance ############
+    if args.juxtacrine_distance == -1: 
+        args.juxtacrine_distance = distance_a_b
+
+    if args.block_juxtacrine == 0:
+        print("Auto calculated juxtacrine distance is %g. To change it use --juxtacrine_distance"%args.juxtacrine_distance)
     #### sort the nodes in the ascending order of x and y coordinates ####################
     i=0
     node_id_sorted_xy=[]
@@ -290,7 +294,6 @@ if __name__ == "__main__":
     ###################################################################################
 
     #####################################################################################
-    # Set threshold gene percentile
     cell_percentile = []
     for i in range (0, cell_vs_gene.shape[0]):
         y = sorted(cell_vs_gene[i]) # sort each row/cell in ascending order of gene expressions
@@ -301,11 +304,10 @@ if __name__ == "__main__":
             #all_deactive_count = all_deactive_count + 1
         cell_percentile.append(active_cutoff) 
 
-    
+    print('set threshold gene percentile done')
     ##############################################################################
     # some preprocessing before making the input graph
     count_total_edges = 0
-    cells_ligand_vs_receptor = defaultdict(dict)
     """
     cells_ligand_vs_receptor = []
     for i in range (0, cell_vs_gene.shape[0]):
@@ -316,25 +318,27 @@ if __name__ == "__main__":
             cells_ligand_vs_receptor[i].append([])
             cells_ligand_vs_receptor[i][j] = []
     """
+    cells_ligand_vs_receptor = defaultdict(dict)
+
     ligand_list =  list(ligand_dict_dataset.keys())            
     start_index = 0 #args.slice
     end_index = len(ligand_list) #min(len(ligand_list), start_index+100)
-    
+    print('some preprocessing before making the input graph')    
     for g in range(start_index, end_index): 
         gene = ligand_list[g]
-        #for i in range (0, cell_vs_gene.shape[0]): # ligand
-        for i in weightdict_i_to_j.keys():
+        for i in range (0, cell_vs_gene.shape[0]): # ligand
+              
             if cell_vs_gene[i][gene_index[gene]] < cell_percentile[i]:
                 continue
-            for j in weightdict_i_to_j[i].keys():
-            #for j in range (0, cell_vs_gene.shape[0]): # receptor
-                #if i not in weightdict_i_to_j or j not in weightdict_i_to_j[i]: #dist_X[i,j]==0: 
-                #    continue
+            
+            for j in range (0, cell_vs_gene.shape[0]): # receptor
+                if i not in weightdict_i_to_j or j not in weightdict_i_to_j[i]: #dist_X[i,j]==0: 
+                    continue
                 if args.block_autocrine == 1 and i==j:
                     continue
                 for gene_rec in ligand_dict_dataset[gene]:
                     if cell_vs_gene[j][gene_index[gene_rec]] >= cell_percentile[j]: # or cell_vs_gene[i][gene_index[gene]] >= cell_percentile[i][4] :#gene_list_percentile[gene_rec][1]: #global_percentile: #
-                        if (gene_rec in cell_cell_contact) and (args.block_juxtacrine==1 or euclidean_distances(coordinates[i],coordinates[j]) > args.juxtacrine_distance):
+                        if (gene_rec in cell_cell_contact) and (args.block_juxtacrine==1 or euclidean_distances(coordinates[i:i+1],coordinates[j:j+1]) > args.juxtacrine_distance):
                             continue
     
                         communication_score = cell_vs_gene[i][gene_index[gene]] * cell_vs_gene[j][gene_index[gene_rec]]
@@ -355,11 +359,6 @@ if __name__ == "__main__":
                             cells_ligand_vs_receptor[i][j] = []
                             cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
 
-                                                
-                        
-                        
-                        
-                        
                         count_total_edges = count_total_edges + 1
                         
         print('%d/%d ligand genes processed'%(g+1, len(ligand_list)), end='\r')
@@ -384,7 +383,7 @@ if __name__ == "__main__":
                         gene_rec = cells_ligand_vs_receptor[i][j][k][1]
                         ligand_receptor_coexpression_score = cells_ligand_vs_receptor[i][j][k][2]
                         row_col.append([i,j])
-                        edge_weight.append([weightdict_i_to_j[i,j], ligand_receptor_coexpression_score, cells_ligand_vs_receptor[i][j][k][3]])
+                        edge_weight.append([weightdict_i_to_j[i][j], ligand_receptor_coexpression_score, cells_ligand_vs_receptor[i][j][k][3]])
                         lig_rec.append([gene, gene_rec])
                                                   
                         if i==j: # self-loop
