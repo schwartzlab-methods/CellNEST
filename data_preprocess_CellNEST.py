@@ -8,7 +8,7 @@ import pickle
 from scipy import sparse
 import numpy as np
 import qnorm
-from scipy.sparse import csr_matrix
+#from scipy.sparse import csr_matrix
 from collections import defaultdict
 import pandas as pd
 import gzip
@@ -16,7 +16,8 @@ import argparse
 import os
 import scanpy as sc
 import json
-from sklearn.metrics.pairwise import euclidean_distances
+import gc
+from sklearn.neighbors import NearestNeighbors
 
 print('user input reading')
  
@@ -143,25 +144,80 @@ if __name__ == "__main__":
 
 
     # build physical distance matrix
-    distance_matrix = euclidean_distances(coordinates, coordinates)
-    #### then automatically calculate the distance between two nodes #########
-    sorted_first_row = np.sort(distance_matrix[0,:])
-    if args.neighborhood_threshold == 0:
-        distance_a_b = sorted_first_row[1]
-        args.neighborhood_threshold = distance_a_b * 4 # 4 times the distance between two nodes
-
+    print('Build physical distance matrix')
     if args.distance_measure == 'fixed':
+        # then you need to set the args.neighborhood_threshold
+        if args.neighborhood_threshold == 0:
+            from sklearn.metrics.pairwise import euclidean_distances
+            distance_matrix = euclidean_distances(coordinates, coordinates)
+            #### then automatically calculate the min distance between two nodes #########
+            sorted_first_row = np.sort(distance_matrix[0,:])
+            distance_a_b = sorted_first_row[1]
+            args.neighborhood_threshold = distance_a_b * 4 # 4 times the distance between two nodes
+            distance_matrix = 0
+            gc.collect()
+
+        nbrs = NearestNeighbors(radius=args.neighborhood_threshold, algorithm='kd_tree', n_jobs=-1)
+        nbrs.fit(coordinates)
+        distances, indices = nbrs.kneighbors(coordinates)
         print('Neighborhood distance is set to be %g (same unit as the coordinates)'%(args.neighborhood_threshold))
     else:
         print('Neighborhood distance is set to be %d nearest neighbors'%args.k)
+        nbrs = NearestNeighbors(n_neighbors=args.k, algorithm='kd_tree', n_jobs=-1)
+        nbrs.fit(coordinates)
+        distances, indices = nbrs.kneighbors(coordinates)
+
+    unique_distances = np.unique(distances)
+    distance_a_b = unique_distances[1]
+    # distances: array of shape (n_cells, k) with the Euclidean distance from 
+    # each cell to its k neighbors.
+    # indices: array of shape (n_cells, k) with the neighbor indices (row indices of X).
+    # each cell 'j' will receive signal from its neighbors 'i' in descending order of weights
+    print('Assign weight to the neighborhood relations based on neighborhood distance')
+    weightdict_i_to_j = defaultdict(dict)
+    for cell_idx in range (0, indices.shape[0]):
+        max_value = np.max(distances[cell_idx,:])
+        min_value = np.min(distances[cell_idx,:])
+        for neigh_idx in range (0, indices.shape[1]):
+            neigh_cell_idx = indices[cell_idx][neigh_idx]
+            distance_neigh_cell = distances[cell_idx][neigh_idx]
+            flipped_distance_neigh_cell = 1-(distance_neigh_cell-min_value)/(max_value-min_value)
+            # i = neigh_cell_idx, j = cell_idx
+            weightdict_i_to_j[neigh_cell_idx][cell_idx] = flipped_distance_neigh_cell
 
 
-    #### automatically set the args.juxtacrine_distance ############
-    if args.juxtacrine_distance == -1: 
-        args.juxtacrine_distance = sorted_first_row[1]
+    # assign weight to the neighborhood relations based on neighborhood distance 
+    """
+    dist_X = np.zeros((distance_matrix.shape[0], distance_matrix.shape[1]))
+    for j in range(0, distance_matrix.shape[1]): # look at all the incoming edges to node 'j'
+        max_value=np.max(distance_matrix[:,j]) # max distance of node 'j' to all it's neighbors (incoming)
+        min_value=np.min(distance_matrix[:,j]) # min distance of node 'j' to all it's neighbors (incoming)
+        for i in range(distance_matrix.shape[0]):
+            dist_X[i,j] = 1-(distance_matrix[i,j]-min_value)/(max_value-min_value) # scale the distance of node 'j' to all it's neighbors (incoming) and flip it so that nearest one will have maximum weight.
+            	
+        if args.distance_measure=='knn':
+            list_indx = list(np.argsort(dist_X[:,j]))
+            k_higher = list_indx[len(list_indx)-args.k:len(list_indx)]
+            for i in range(0, distance_matrix.shape[0]):
+                if i not in k_higher:
+                    dist_X[i,j] = 0 #-1
+        else:
+            for i in range(0, distance_matrix.shape[0]):
+                if distance_matrix[i,j] > args.neighborhood_threshold: #i not in k_higher:
+                    dist_X[i,j] = 0 # no ccc happening outside threshold distance
+    
 
-    if args.block_juxtacrine == 0:
-        print("Auto calculated juxtacrine distance is %g. To change it use --juxtacrine_distance"%args.juxtacrine_distance)
+
+
+        #list_indx = list(np.argsort(dist_X[:,j]))
+        #k_higher = list_indx[len(list_indx)-k_nn:len(list_indx)]
+        for i in range(0, distance_matrix.shape[0]):
+            if distance_matrix[i,j] > args.neighborhood_threshold: #i not in k_higher:
+                dist_X[i,j] = 0 # no ccc happening outside threshold distance
+    """      
+    #cell_rec_count = np.zeros((cell_vs_gene.shape[0]))
+
+
     #### sort the nodes in the ascending order of x and y coordinates ####################
     i=0
     node_id_sorted_xy=[]
@@ -231,35 +287,7 @@ if __name__ == "__main__":
         
     print('number of ligand-receptor pairs in this dataset %d '%lr_id)     
     ###################################################################################
-    # assign weight to the neighborhood relations based on neighborhood distance 
-    dist_X = np.zeros((distance_matrix.shape[0], distance_matrix.shape[1]))
-    for j in range(0, distance_matrix.shape[1]): # look at all the incoming edges to node 'j'
-        max_value=np.max(distance_matrix[:,j]) # max distance of node 'j' to all it's neighbors (incoming)
-        min_value=np.min(distance_matrix[:,j]) # min distance of node 'j' to all it's neighbors (incoming)
-        for i in range(distance_matrix.shape[0]):
-            dist_X[i,j] = 1-(distance_matrix[i,j]-min_value)/(max_value-min_value) # scale the distance of node 'j' to all it's neighbors (incoming) and flip it so that nearest one will have maximum weight.
-            	
-        if args.distance_measure=='knn':
-            list_indx = list(np.argsort(dist_X[:,j]))
-            k_higher = list_indx[len(list_indx)-args.k:len(list_indx)]
-            for i in range(0, distance_matrix.shape[0]):
-                if i not in k_higher:
-                    dist_X[i,j] = 0 #-1
-        else:
-            for i in range(0, distance_matrix.shape[0]):
-                if distance_matrix[i,j] > args.neighborhood_threshold: #i not in k_higher:
-                    dist_X[i,j] = 0 # no ccc happening outside threshold distance
-    
 
-
-
-        #list_indx = list(np.argsort(dist_X[:,j]))
-        #k_higher = list_indx[len(list_indx)-k_nn:len(list_indx)]
-        for i in range(0, distance_matrix.shape[0]):
-            if distance_matrix[i,j] > args.neighborhood_threshold: #i not in k_higher:
-                dist_X[i,j] = 0 # no ccc happening outside threshold distance
-                
-    #cell_rec_count = np.zeros((cell_vs_gene.shape[0]))
     #####################################################################################
     # Set threshold gene percentile
     cell_percentile = []
@@ -276,7 +304,8 @@ if __name__ == "__main__":
     ##############################################################################
     # some preprocessing before making the input graph
     count_total_edges = 0
-    
+    cells_ligand_vs_receptor = defaultdict(dict)
+    """
     cells_ligand_vs_receptor = []
     for i in range (0, cell_vs_gene.shape[0]):
         cells_ligand_vs_receptor.append([])
@@ -285,7 +314,7 @@ if __name__ == "__main__":
         for j in range (0, cell_vs_gene.shape[0]):
             cells_ligand_vs_receptor[i].append([])
             cells_ligand_vs_receptor[i][j] = []
-
+    """
     ligand_list =  list(ligand_dict_dataset.keys())            
     start_index = 0 #args.slice
     end_index = len(ligand_list) #min(len(ligand_list), start_index+100)
@@ -298,13 +327,13 @@ if __name__ == "__main__":
                 continue
             
             for j in range (0, cell_vs_gene.shape[0]): # receptor
-                if dist_X[i,j]==0: 
+                if i not in weightdict_i_to_j or j not in weightdict_i_to_j[i]: #dist_X[i,j]==0: 
                     continue
                 if args.block_autocrine == 1 and i==j:
                     continue
                 for gene_rec in ligand_dict_dataset[gene]:
                     if cell_vs_gene[j][gene_index[gene_rec]] >= cell_percentile[j]: # or cell_vs_gene[i][gene_index[gene]] >= cell_percentile[i][4] :#gene_list_percentile[gene_rec][1]: #global_percentile: #
-                        if (gene_rec in cell_cell_contact) and (args.block_juxtacrine==1 or distance_matrix[i,j] > args.juxtacrine_distance):
+                        if (gene_rec in cell_cell_contact) and (args.block_juxtacrine==1 or euclidean_distances(coordinates[i],coordinates[j]) > args.juxtacrine_distance):
                             continue
     
                         communication_score = cell_vs_gene[i][gene_index[gene]] * cell_vs_gene[j][gene_index[gene_rec]]
@@ -314,7 +343,22 @@ if __name__ == "__main__":
                             print('zero valued ccc score found. Might be a potential ERROR!! ')
                             continue	
                             
-                        cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
+                        #cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
+                        if i in cells_ligand_vs_receptor:
+                            if j in cells_ligand_vs_receptor[i]:
+                                cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
+                            else:
+                                cells_ligand_vs_receptor[i][j] = []
+                                cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
+                        else:
+                            cells_ligand_vs_receptor[i][j] = []
+                            cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
+
+                                                
+                        
+                        
+                        
+                        
                         count_total_edges = count_total_edges + 1
                         
         print('%d/%d ligand genes processed'%(g+1, len(ligand_list)), end='\r')
@@ -328,10 +372,10 @@ if __name__ == "__main__":
     edge_weight = [] # 3D edge features in the same order as row_col
     lig_rec = [] # ligand and receptors corresponding to the edges in the same order as row_col
     self_loop_found = defaultdict(dict) # to keep track of self-loops -- used later during visualization plotting
-    for i in range (0, len(cells_ligand_vs_receptor)):
+    for i in cells_ligand_vs_receptor.keys():
         #ccc_j = []
-        for j in range (0, len(cells_ligand_vs_receptor)):
-            if dist_X[i,j]>0: #distance_matrix[i][j] <= args.neighborhood_threshold: 
+        for j in cells_ligand_vs_receptor[i].keys():
+            if i in weightdict_i_to_j and j in weightdict_i_to_j[i]: #dist_X[i,j]>0: #distance_matrix[i][j] <= args.neighborhood_threshold: 
                 count_local = 0
                 if len(cells_ligand_vs_receptor[i][j])>0:
                     for k in range (0, len(cells_ligand_vs_receptor[i][j])):
@@ -339,7 +383,7 @@ if __name__ == "__main__":
                         gene_rec = cells_ligand_vs_receptor[i][j][k][1]
                         ligand_receptor_coexpression_score = cells_ligand_vs_receptor[i][j][k][2]
                         row_col.append([i,j])
-                        edge_weight.append([dist_X[i,j], ligand_receptor_coexpression_score, cells_ligand_vs_receptor[i][j][k][3]])
+                        edge_weight.append([weightdict_i_to_j[i,j], ligand_receptor_coexpression_score, cells_ligand_vs_receptor[i][j][k][3]])
                         lig_rec.append([gene, gene_rec])
                                                   
                         if i==j: # self-loop
