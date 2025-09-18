@@ -7,7 +7,7 @@ mkdir cellnest_container
 cd cellnest_container
 singularity pull cellnest_image.sif library://fatema/collection/cellnest_image.sif:latest
 ```
-[** NOTE: Instructions for pulling the image on Digital Alliance are provided at the end.](https://github.com/schwartzlab-methods/CellNEST/blob/main/vignette/running_CellNEST_singularity_container.md#running-cellnest-container-on-digital-alliance-using-apptainer)
+[** NOTE: Instructions for pulling the image on Digital Research Alliance are provided at the end.](https://github.com/schwartzlab-methods/CellNEST/blob/main/vignette/running_CellNEST_singularity_container.md#running-cellnest-container-on-digital-alliance-using-apptainer)
 
 ### Running CellNEST model through the downloaded singularity image
 
@@ -141,8 +141,8 @@ $ singularity run --home=/cluster/projects/prof-group/fatema/cellnest_container/
 It will generate edge_graph.pdf and edge_graph.svg in the current working directory.
 
 
-### Running CellNEST container on Digital Alliance using Apptainer
-#### Pulling the Singularity image on Digital Alliance using Apptainer
+### Running CellNEST container on Digital Research Alliance using Apptainer
+#### Pulling the Singularity image on Digital Research Alliance using Apptainer
 ```
 module load apptainer
 apptainer pull cellnest_image.sif library://fatema/collection/cellnest_image.sif:latest
@@ -195,7 +195,7 @@ We write a shell script `gpu_job_digital_alliance_container.sh’ as follows:
 ```
 #!/bin/bash
 # ---------------------------------------------------------------------
-# SLURM script for a GPU job on Graham at Digital Alliance cluster.
+# SLURM script for a GPU job on Graham at Digital Research Alliance cluster.
 # ---------------------------------------------------------------------
 #SBATCH --account=def-prof-group
 #SBATCH --gres=gpu:v100:1    	# Request 2 v100 GPUs
