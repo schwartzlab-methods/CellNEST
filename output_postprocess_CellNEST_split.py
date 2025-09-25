@@ -83,15 +83,15 @@ if __name__ == "__main__":
     ################################################################################################################
     dict_cell_edge = defaultdict(list) # key = node. values = incoming edges
     dict_cell_neighbors = defaultdict(list) # key = node. value = nodes corresponding to incoming edges/neighbors
-    nodes_active = dict()
+    #nodes_active = dict()
     for i in range(0, len(row_col)):
         dict_cell_edge[row_col[i][1]].append(i) # index of the edges
         dict_cell_neighbors[row_col[i][1]].append(row_col[i][0]) # neighbor id
-        nodes_active[row_col[i][1]] = '' # to
-        nodes_active[row_col[i][0]] = '' # from
+        #nodes_active[row_col[i][1]] = '' # to
+        #nodes_active[row_col[i][0]] = '' # from
 
 
-    datapoint_size = len(nodes_active.keys())
+    datapoint_size = total_num_cell #len(nodes_active.keys())
 
     for i in range (0, datapoint_size):
         neighbor_list = dict_cell_neighbors[i]
@@ -103,18 +103,18 @@ if __name__ == "__main__":
     fp = gzip.open(node_id_sorted, 'rb')
     node_id_sorted_xy = pickle.load(fp)
 
-    node_id_sorted_xy_temp = []
+    #node_id_sorted_xy_temp = []
     unfiltered_index_to_filtered_serial = dict() # not the serial. We do not need to know the serial
     filtered_serial_to_unfiltered_index = dict()
     active_node_count = 0
     for i in range(0, len(node_id_sorted_xy)):
-        if node_id_sorted_xy[i][0] in nodes_active: # skip those which are not in our ROI
-            node_id_sorted_xy_temp.append(node_id_sorted_xy[i])
-            unfiltered_index_to_filtered_serial[node_id_sorted_xy[i][0]] =  active_node_count
-            filtered_serial_to_unfiltered_index[active_node_count] =  node_id_sorted_xy[i][0]
-            active_node_count = active_node_count + 1
+        #if node_id_sorted_xy[i][0] in nodes_active: # skip those which are not in our ROI
+        #node_id_sorted_xy_temp.append(node_id_sorted_xy[i])
+        unfiltered_index_to_filtered_serial[node_id_sorted_xy[i][0]] =  active_node_count
+        filtered_serial_to_unfiltered_index[active_node_count] =  node_id_sorted_xy[i][0]
+        active_node_count = active_node_count + 1
 
-    node_id_sorted_xy = node_id_sorted_xy_temp
+    #node_id_sorted_xy = node_id_sorted_xy_temp
     ##################################################################################################################
     # split it into N set of edges
 
@@ -329,8 +329,8 @@ if __name__ == "__main__":
         
         
             for i in range (0, len(barcode_info)): 
-                if i not in nodes_active:
-                    continue
+                #if i not in nodes_active:
+                #    continue
                 split_i = unfiltered_index_to_filtered_serial[i]
                 if count_points_component[labels[split_i]] > 1:
                     barcode_info[i][3] = index_dict[labels[split_i]] #2
@@ -345,8 +345,8 @@ if __name__ == "__main__":
             csv_record.append(['from_cell', 'to_cell', 'ligand', 'receptor', 'attention_score', 'component', 'from_id', 'to_id'])
             for j in range (0, len(barcode_info)):
                 for i in range (0, len(barcode_info)):
-                    if i not in nodes_active or j not in nodes_active:
-                        continue
+                    #if i not in nodes_active or j not in nodes_active:
+                    #    continue
                     if i==j:
                         if (i not in lig_rec_dict or j not in lig_rec_dict[i]):
                             continue
