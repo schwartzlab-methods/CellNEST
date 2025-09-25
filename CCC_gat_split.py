@@ -24,15 +24,15 @@ def get_split_graph(training_data, node_id_sorted, total_subgraphs, expression_m
     dict_cell_neighbors = defaultdict(list) # key = node. value = nodes corresponding to incoming edges/neighbors
 
 
-    nodes_active = dict()
+    #nodes_active = dict()
     for i in range(0, len(row_col)): 
         dict_cell_edge[row_col[i][1]].append(i) # index of the edges
         dict_cell_neighbors[row_col[i][1]].append(row_col[i][0]) # neighbor id
-        nodes_active[row_col[i][1]] = '' # to 
-        nodes_active[row_col[i][0]] = '' # from
+        #nodes_active[row_col[i][1]] = '' # to 
+        #nodes_active[row_col[i][0]] = '' # from
     
     
-    datapoint_size = len(nodes_active.keys())
+    datapoint_size = total_num_cell #len(nodes_active.keys())
     
     for i in range (0, datapoint_size):
         neighbor_list = dict_cell_neighbors[i]
@@ -42,13 +42,14 @@ def get_split_graph(training_data, node_id_sorted, total_subgraphs, expression_m
     
     fp = gzip.open(node_id_sorted, 'rb')
     node_id_sorted_xy = pickle.load(fp)
-    
+    '''
     node_id_sorted_xy_temp = []
     for i in range(0, len(node_id_sorted_xy)):
         if node_id_sorted_xy[i][0] in nodes_active: # skip those which are not in our ROI
             node_id_sorted_xy_temp.append(node_id_sorted_xy[i])
     
-    node_id_sorted_xy = node_id_sorted_xy_temp    
+    node_id_sorted_xy = node_id_sorted_xy_temp 
+    '''
     ##################################################################################################################
 
     if expression_matrix_path == '':
@@ -118,13 +119,13 @@ def get_split_graph(training_data, node_id_sorted, total_subgraphs, expression_m
             if i not in id_map_old_new[set_id]:
                 id_map_old_new[set_id][i] = new_id
                 id_map_new_old[set_id][new_id] = i
-                spot_list.append(new_id)
+                spot_list.append(i) #new_id)
                 new_id = new_id + 1
     
             if j not in id_map_old_new[set_id]:
                 id_map_old_new[set_id][j] = new_id
                 id_map_new_old[set_id][new_id] = j
-                spot_list.append(new_id)
+                spot_list.append(j) #new_id)
                 new_id = new_id + 1
     
     
