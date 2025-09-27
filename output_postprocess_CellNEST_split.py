@@ -314,9 +314,10 @@ if __name__ == "__main__":
             connecting_edges = dok_matrix((n_rows, n_cols), dtype=np.float32)
  
             # Fill it
-            for i in connecting_edges_dummy:
-                for j in connecting_edges_dummy[j]:
-                    connecting_edges[i, j] = connecting_edges_dummy[i][j]
+            for i, row_dict in connecting_edges_dummy.items():
+                for j, val in row_dict.items():
+                    connecting_edges[i, j] = val
+
         
         
             graph = csr_matrix(connecting_edges)
