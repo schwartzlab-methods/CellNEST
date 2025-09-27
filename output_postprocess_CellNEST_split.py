@@ -308,7 +308,6 @@ if __name__ == "__main__":
 
 
             # Find matrix dimensions
-            # Find matrix dimensions
             n_rows = datapoint_size
             n_cols = datapoint_size
             # Create sparse DOK matrix
