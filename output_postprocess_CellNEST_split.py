@@ -163,20 +163,20 @@ if __name__ == "__main__":
         # old to new mapping of the nodes
         # make an index array, so that existing node ids are mapped to new ids
         new_id = 0
-        spot_list = []
+        #spot_list = []
         for k in set1_edges_index:
             i = row_col[k][0] # unfiltered node index
             j = row_col[k][1] # unfiltered node index
             if i not in id_map_old_new[set_id]:
                 id_map_old_new[set_id][i] = new_id # old = unfiltered, new = filtered + subgraph specific
                 id_map_new_old[set_id][new_id] = i
-                spot_list.append(new_id)
+                # spot_list.append(i)
                 new_id = new_id + 1
 
             if j not in id_map_old_new[set_id]:
                 id_map_old_new[set_id][j] = new_id
                 id_map_new_old[set_id][new_id] = j
-                spot_list.append(new_id)
+                # spot_list.append(j)
                 new_id = new_id + 1
 
 
@@ -292,20 +292,32 @@ if __name__ == "__main__":
             ccc_index_dict = dict()
             threshold_down =  np.percentile(sorted(distribution), 0)
             threshold_up =  np.percentile(sorted(distribution), 100)
-            connecting_edges = np.zeros((datapoint_size,datapoint_size))
-            for i in range (0, datapoint_size):
-                if i not in attention_scores:
-                    continue
-                for j in range (0, datapoint_size):
-                    if j not in attention_scores[i]:
-                        continue
+
+            
+            connecting_edges_dummy = defaultdict(dict) 
+            #connecting_edges = defaultdict(dict) #np.zeros((datapoint_size,datapoint_size))
+            for i  in attention_scores:             
+                for j in attention_scores[i]:
                     atn_score_list = attention_scores[i][j]
                     for k in range (0, len(atn_score_list)):
                         if attention_scores[i][j][k] >= threshold_down and attention_scores[i][j][k] <= threshold_up: #np.percentile(sorted(distribution), 50):
-                            connecting_edges[i][j] = 1
+                            connecting_edges_dummy[i][j] = 1
+                            #connecting_edges[i][j] = 1
                             ccc_index_dict[i] = ''
                             ccc_index_dict[j] = ''
-        
+
+
+            # Find matrix dimensions
+            n_rows = max(connecting_edges_dummy.keys()) + 1
+            n_cols = max(max(connecting_edges_dummy.keys()) for inner in connecting_edges_dummy.values()) + 1
+ 
+            # Create sparse DOK matrix
+            connecting_edges = dok_matrix((n_rows, n_cols), dtype=np.float32)
+ 
+            # Fill it
+            for i, row_dict in connecting_edges_dummy.items():
+                for j, val in row_dict.items():
+                    connecting_edges[i, j] = val        
         
         
             graph = csr_matrix(connecting_edges)
@@ -334,7 +346,7 @@ if __name__ == "__main__":
                 split_i = unfiltered_index_to_filtered_serial[i]
                 if count_points_component[labels[split_i]] > 1:
                     barcode_info[i][3] = index_dict[labels[split_i]] #2
-                elif connecting_edges[split_i][split_i] == 1 and (i in lig_rec_dict and i in lig_rec_dict[i] and len(lig_rec_dict[i][i])>0): 
+                elif connecting_edges[split_i, split_i] == 1 and (i in lig_rec_dict and i in lig_rec_dict[i] and len(lig_rec_dict[i][i])>0): 
                     barcode_info[i][3] = 1
                 else:
                     barcode_info[i][3] = 0
