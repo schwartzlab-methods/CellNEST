@@ -308,16 +308,16 @@ if __name__ == "__main__":
 
 
             # Find matrix dimensions
-            n_rows = max(connecting_edges_dummy.keys()) + 1
-            n_cols = max(max(connecting_edges_dummy.keys()) for inner in connecting_edges_dummy.values()) + 1
- 
+            # Find matrix dimensions
+            n_rows = datapoint_size
+            n_cols = datapoint_size
             # Create sparse DOK matrix
             connecting_edges = dok_matrix((n_rows, n_cols), dtype=np.float32)
  
             # Fill it
-            for i, row_dict in connecting_edges_dummy.items():
-                for j, val in row_dict.items():
-                    connecting_edges[i, j] = val        
+            for i in connecting_edges_dummy:
+                for j in connecting_edges_dummy[j]:
+                    connecting_edges[i, j] = connecting_edges_dummy[i][j]
         
         
             graph = csr_matrix(connecting_edges)
