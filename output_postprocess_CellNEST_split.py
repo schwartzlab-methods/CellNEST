@@ -26,7 +26,7 @@ import copy
 import argparse
 import gc
 import os
-
+from scipy.sparse import dok_matrix
 
 ##########################################################
 if __name__ == "__main__":
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     active_node_count = 0
     for i in range(0, len(node_id_sorted_xy)):
         #if node_id_sorted_xy[i][0] in nodes_active: # skip those which are not in our ROI
-        #node_id_sorted_xy_temp.append(node_id_sorted_xy[i])
+            #node_id_sorted_xy_temp.append(node_id_sorted_xy[i])
         unfiltered_index_to_filtered_serial[node_id_sorted_xy[i][0]] =  active_node_count
         filtered_serial_to_unfiltered_index[active_node_count] =  node_id_sorted_xy[i][0]
         active_node_count = active_node_count + 1
@@ -170,13 +170,13 @@ if __name__ == "__main__":
             if i not in id_map_old_new[set_id]:
                 id_map_old_new[set_id][i] = new_id # old = unfiltered, new = filtered + subgraph specific
                 id_map_new_old[set_id][new_id] = i
-                # spot_list.append(i)
+                #spot_list.append(i) #new_id)
                 new_id = new_id + 1
 
             if j not in id_map_old_new[set_id]:
                 id_map_old_new[set_id][j] = new_id
                 id_map_new_old[set_id][new_id] = j
-                # spot_list.append(j)
+                #spot_list.append(j) #new_id)
                 new_id = new_id + 1
 
 
@@ -273,12 +273,9 @@ if __name__ == "__main__":
             min_value = np.min(distribution)
             print('attention score is between %g to %g, total edges %d'%(np.min(distribution), np.max(distribution), len(distribution)))
             distribution = []
-            for i in range (0, datapoint_size):
-                if i not in attention_scores:
-                    continue
-                for j in range (0, datapoint_size):
-                    if j not in attention_scores[i]:
-                        continue
+            for i  in attention_scores:
+                for j in attention_scores[i]:
+                       
                     for k in range (0, len(attention_scores[i][j])):
                         attention_scores[i][j][k] = (attention_scores[i][j][k]-min_value)/(max_value-min_value)
                         scaled_score = attention_scores[i][j][k]
@@ -292,8 +289,6 @@ if __name__ == "__main__":
             ccc_index_dict = dict()
             threshold_down =  np.percentile(sorted(distribution), 0)
             threshold_up =  np.percentile(sorted(distribution), 100)
-
-            
             connecting_edges_dummy = defaultdict(dict) 
             #connecting_edges = defaultdict(dict) #np.zeros((datapoint_size,datapoint_size))
             for i  in attention_scores:             
@@ -305,8 +300,8 @@ if __name__ == "__main__":
                             #connecting_edges[i][j] = 1
                             ccc_index_dict[i] = ''
                             ccc_index_dict[j] = ''
-
-
+        
+        
             # Find matrix dimensions
             n_rows = datapoint_size
             n_cols = datapoint_size
@@ -318,10 +313,9 @@ if __name__ == "__main__":
                 for j, val in row_dict.items():
                     connecting_edges[i, j] = val
 
-        
-        
+            
             graph = csr_matrix(connecting_edges)
-            n_components, labels = connected_components(csgraph=graph,directed=True, connection = 'weak',  return_labels=True) #
+            n_components, labels = connected_components(csgraph=graph, directed=True, connection = 'weak',  return_labels=True) #
             #print('number of component %d'%n_components)
         
             count_points_component = np.zeros((n_components))
@@ -344,14 +338,15 @@ if __name__ == "__main__":
                 #if i not in nodes_active:
                 #    continue
                 split_i = unfiltered_index_to_filtered_serial[i]
+                #print(labels[split_i])
                 if count_points_component[labels[split_i]] > 1:
                     barcode_info[i][3] = index_dict[labels[split_i]] #2
-                elif connecting_edges[split_i, split_i] == 1 and (i in lig_rec_dict and i in lig_rec_dict[i] and len(lig_rec_dict[i][i])>0): 
+                elif connecting_edges[split_i,split_i] == 1 and (i in lig_rec_dict and i in lig_rec_dict[i] and len(lig_rec_dict[i][i])>0): 
                     barcode_info[i][3] = 1
                 else:
                     barcode_info[i][3] = 0
         
-     
+            print('PASSED')
             ###############
             csv_record = []
             csv_record.append(['from_cell', 'to_cell', 'ligand', 'receptor', 'attention_score', 'component', 'from_id', 'to_id'])
