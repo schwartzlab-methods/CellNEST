@@ -341,7 +341,8 @@ if __name__ == "__main__":
                 #print(labels[split_i])
                 if count_points_component[labels[split_i]] > 1:
                     barcode_info[i][3] = index_dict[labels[split_i]] #2
-                elif connecting_edges[split_i,split_i] == 1 and (i in lig_rec_dict and i in lig_rec_dict[i] and len(lig_rec_dict[i][i])>0): 
+                elif split_i in connecting_edges_dummy and split_i in connecting_edges_dummy[split_i] and \
+                    (i in lig_rec_dict and i in lig_rec_dict[i] and len(lig_rec_dict[i][i])>0): 
                     barcode_info[i][3] = 1
                 else:
                     barcode_info[i][3] = 0
