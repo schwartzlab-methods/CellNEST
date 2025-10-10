@@ -286,9 +286,12 @@ if __name__ == "__main__":
 
             print('attention score is scaled between %g to %g for ensemble'%(np.min(distribution), np.max(distribution)))
             #print('min attention score %g, total edges %d'%(min_attention_score, len(distribution)))
-            ccc_index_dict = dict()
+            
+            '''
             threshold_down =  np.percentile(sorted(distribution), 0)
             threshold_up =  np.percentile(sorted(distribution), 100)
+            
+            ccc_index_dict = dict()
             connecting_edges_dummy = defaultdict(dict) 
             #connecting_edges = defaultdict(dict) #np.zeros((datapoint_size,datapoint_size))
             for i  in attention_scores:             
@@ -346,11 +349,17 @@ if __name__ == "__main__":
                     barcode_info[i][3] = 1
                 else:
                     barcode_info[i][3] = 0
-        
-            print('PASSED')
+            
+            
+            
+            
+            '''
+            # print('PASSED')
             ###############
+            '''
             csv_record = []
             csv_record.append(['from_cell', 'to_cell', 'ligand', 'receptor', 'attention_score', 'component', 'from_id', 'to_id'])
+            
             for j in range (0, len(barcode_info)):
                 for i in range (0, len(barcode_info)):
                     #if i not in nodes_active or j not in nodes_active:
@@ -373,30 +382,34 @@ if __name__ == "__main__":
                                 csv_record.append([barcode_info[i][0], barcode_info[j][0], lig_rec_dict[i][j][k][0], lig_rec_dict[i][j][k][1], attention_scores[split_i][split_j][k], '0-single', i, j])
                             else:
                                 csv_record.append([barcode_info[i][0], barcode_info[j][0], lig_rec_dict[i][j][k][0], lig_rec_dict[i][j][k][1], attention_scores[split_i][split_j][k], barcode_info[i][3], i, j])
+            
+            '''
+            csv_record = []
+            csv_record.append(['from_cell', 'to_cell', 'ligand', 'receptor', 'attention_score', 'component', 'from_id', 'to_id'])
+            for i in lig_rec_dict:
+                for j in lig_rec_dict[i]:                           
+                    split_i = unfiltered_index_to_filtered_serial[i] 
+                    split_j = unfiltered_index_to_filtered_serial[j]
+                    if split_i not in attention_scores or split_j not in attention_scores[split_i]:
+                        continue
+ 
+                    atn_score_list = attention_scores[split_i][split_j]
+                    for k in range (0, len(atn_score_list)):
+                        #if attention_scores[split_i][split_j][k] >= threshold_down and attention_scores[split_i][split_j][k] <= threshold_up: 
+                        #    if barcode_info[i][3]==0:
+                        #        print('edge not found')
+                        #    else:
+                        csv_record.append([barcode_info[i][0], barcode_info[j][0], lig_rec_dict[i][j][k][0], lig_rec_dict[i][j][k][1], attention_scores[split_i][split_j][k], barcode_info[i][3], i, j])
      
             ###########	
+
           
             print('records found %d'%len(csv_record))
             for i in range (1, len(csv_record)): 
                 key_value = str(csv_record[i][6]) +'+'+ str(csv_record[i][7]) + '+' + csv_record[i][2] + '+' + csv_record[i][3]
                 csv_record_dict[key_value].append([csv_record[i][4], run])
 
-            ##### one run completes #####
-        '''    
-        for key_value in csv_record_dict.keys():
-            run_dict = defaultdict(list)
-            for scores in csv_record_dict[key_value]: # entry count = total_runs 
-                run_dict[scores[1]].append(scores[0]) # [run_id]=score
-            
-            for runs in run_dict.keys():
-                run_dict[runs] = np.mean(run_dict[runs]) # taking the mean attention score
-            
-     
-            csv_record_dict[key_value] = [] # make it blank
-            for runs in run_dict.keys(): # has just one mean value for the attention score
-                csv_record_dict[key_value].append([run_dict[runs],runs]) # [score, 0]
-        '''
-        #######################################
+        ##### one run completes #####
         
         all_edge_list = []
         for key_value in csv_record_dict.keys():
@@ -484,7 +497,7 @@ if __name__ == "__main__":
     #################
     
     ################################################################################
-    csv_record_dict = copy.deepcopy(csv_record_intersect_dict)
+    csv_record_dict = csv_record_intersect_dict
     csv_record = []
     csv_record.append(['from_cell', 'to_cell', 'ligand', 'receptor', 'edge_rank', 'component', 'from_id', 'to_id', 'attention_score'])
     for key_value in csv_record_dict.keys():
@@ -498,20 +511,8 @@ if __name__ == "__main__":
         label = -1 
         csv_record.append([barcode_info[i][0], barcode_info[j][0], ligand, receptor, edge_rank, label, i, j, score])
 
- 
-    print('common LR count %d'%len(csv_record))
-    
-    ##### save the file for downstream analysis ########
-    ##### you can do additional filtering here if needed. None is done for now ############
-    csv_record_final = []
-    csv_record_final.append(csv_record[0])
-    for k in range (1, len(csv_record)):
-        ligand = csv_record[k][2]
-        receptor = csv_record[k][3]
-        #if ligand =='CCL19' and receptor == 'CCR7':
-        csv_record_final.append(csv_record[k])
-
-        
-    df = pd.DataFrame(csv_record_final) # output 4
+    print('common LR count %d'%len(csv_record))    
+    ##### save the file for downstream analysis ########        
+    df = pd.DataFrame(csv_record) # output 4
     df.to_csv(args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv', index=False, header=False)
     print('Result saved: '+args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv')

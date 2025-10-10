@@ -25,6 +25,7 @@ import altair as alt
 import altairThemes # assuming you have altairThemes.py at your current directoy or your system knows the path of this altairThemes.py.
 import gc
 import copy
+from scipy.sparse import dok_matrix
 alt.themes.register("publishTheme", altairThemes.publishTheme)
 # enable the newly registered theme
 alt.themes.enable("publishTheme")
@@ -44,7 +45,7 @@ def preprocessDf(df):
 
 def plot(df):
   set1 = altairThemes.get_colour_scheme("Set1", len(df["component"].unique()))
-  set1[0] = '#000000'
+  set1[0] = args.no_ccc_color
   base = alt.Chart(df).mark_bar().encode(
             x=alt.X("ligand-receptor:N", axis=alt.Axis(labelAngle=45), sort='-y'),
             y=alt.Y("count()"),
@@ -76,12 +77,16 @@ if __name__ == "__main__":
     parser.add_argument( '--filter_by_annotation', type=str, default='', help='Set cell or spot type, e.g., --filter_by_annotation="T-cell" if you want to filter the CCC')
     parser.add_argument( '--filter_by_component', type=int, default=-1, help='Set component id, e.g., --filter_by_component=9 if you want to filter by component id')
     parser.add_argument( '--sort_by_attentionScore', type=int, default=-1, help='Set --sort_by_attentionScore=1 if you want to sort the histograms of CCC by attention score')
-    
-    
-    
-
+    parser.add_argument( '--point_size', type=float, default=10, help='Set size of points for component plot')   
+    parser.add_argument( '--spread_time', type=float, default=1.0, help='Set size of spread for component plot if you want more spacing among data points')
+    parser.add_argument( '--no_ccc_color', type=str, default='#000000', help='Set the HEX code for background')    
+    parser.add_argument( '--attention_cutoff', type=float, default=-1, help='Set attention cutoff')    
+    parser.add_argument( '--annotation_group', type=str, default="", help='Set group of annotation to filter by inserting &')
     
     args = parser.parse_args()
+
+    temp_file_name = args.data_name + '-' + str(args.top_edge_count)
+
     if args.metadata_from=='metadata/': # if default one is used, then concatenate the dataname. Otherwise, use the user provided path directly
         args.metadata_from = args.metadata_from + args.data_name + '/'
 
@@ -102,7 +107,6 @@ if __name__ == "__main__":
         with gzip.open(args.barcode_info_file, 'rb') as fp:  #b, a:[0:5]        
             barcode_info = pickle.load(fp)    
 
-
     ###############################  read which spots have self loops ################################################################
     if args.selfloop_info_file=='':
         with gzip.open(args.metadata_from + args.data_name +'_self_loop_record', 'rb') as fp:  #b, a:[0:5]   _filtered
@@ -120,14 +124,13 @@ if __name__ == "__main__":
 
         barcode_type=dict() # record the type (annotation) of each spot (barcode)
         for i in range (0, len(pathologist_label)):
-            barcode_type[pathologist_label[i][0]] = pathologist_label[i][1]
-
+            barcode_type[str(pathologist_label[i][0])] = pathologist_label[i][1]
 
     else:
         barcode_type=dict() # record the type (annotation) of each spot (barcode)
         for i in range (0, len(barcode_info)):
-            barcode_type[barcode_info[i][0]] = ''
-
+            barcode_type[str(barcode_info[i][0])] = ''
+        
     ######################### read the CellNEST output in csv format ####################################################
     if args.top_ccc_file == '':
         inFile = args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv'
@@ -136,7 +139,19 @@ if __name__ == "__main__":
         inFile = args.top_ccc_file
         df = pd.read_csv(inFile, sep=",")
 
+    #print('attention')
+    #print(len(df))
+    if args.attention_cutoff != -1:
+        df = df[df['attention_score'] >= args.attention_cutoff]
+    #print(len(df))
 
+    if args.annotation_group != '':
+        print('Looking for only: ')
+        annotation_group = args.annotation_group.split('&')
+        print(annotation_group)
+
+
+    #exit(0)
     csv_record = df.values.tolist() # barcode_info[i][0], barcode_info[j][0], ligand, receptor, edge_rank, label, i, j, score
 
     ## sort the edges based on their rank (column 4), low to high, low being higher attention score
@@ -145,12 +160,23 @@ if __name__ == "__main__":
     # columns are: from_cell, to_cell, ligand_gene, receptor_gene, rank, component, from_id, to_id,  attention_score 
     df_column_names = list(df.columns)
 #    print(df_column_names)
+    #print(len(csv_record))
 
-    print(len(csv_record))
+    score_summary = []
+    for i in range (0, len(csv_record)):
+        score_summary.append(csv_record[i][8])
 
+    #print('score ranges from %g to %g'%(np.min(score_summary), np.max(score_summary)))
+
+    #exit(0)
+    #if args.top_edge_count != -1:
+    #    csv_record_final = [df_column_names] + csv_record[0:min(args.top_edge_count, len(csv_record))]
     if args.top_edge_count != -1:
-        csv_record_final = [df_column_names] + csv_record[0:min(args.top_edge_count, len(csv_record))]
+        csv_record = csv_record[0:min(args.top_edge_count, len(csv_record))]
 
+    csv_record_final = [df_column_names] + csv_record
+    #print(len(csv_record_final))
+    
     ## add a dummy row at the end for the convenience of histogram preparation (to keep the color same as altair plot)
     i=0
     j=0
@@ -161,13 +187,27 @@ if __name__ == "__main__":
 
     ######################## connected component finding #################################
     print('Finding connected component')
-    connecting_edges = np.zeros((len(barcode_info),len(barcode_info)))  
+    connecting_edges_dummy = defaultdict(dict) 
+    #connecting_edges = defaultdict(dict) #np.zeros((datapoint_size,datapoint_size))
     for k in range (1, len(csv_record_final)-1): # last record is a dummy for histogram preparation
         i = csv_record_final[k][6]
         j = csv_record_final[k][7]
-        connecting_edges[i][j]=1
-            
-    graph = csr_matrix(connecting_edges)
+        connecting_edges_dummy[i][j]=1
+
+    # Find matrix dimensions
+    datapoint_size = len(barcode_info)
+    n_rows = datapoint_size
+    n_cols = datapoint_size
+    # Create sparse DOK matrix
+    connecting_edges = dok_matrix((n_rows, n_cols), dtype=np.float32)
+
+    # Fill it
+    for i, row_dict in connecting_edges_dummy.items():
+        for j, val in row_dict.items():
+            connecting_edges[i, j] = val
+
+    ########################            
+    graph = connecting_edges #csr_matrix(connecting_edges)
     n_components, labels = connected_components(csgraph=graph,directed=True, connection = 'weak',  return_labels=True) # It assigns each SPOT to a component based on what pair it belongs to
     print('Number of connected components %d'%n_components) 
 
@@ -187,7 +227,8 @@ if __name__ == "__main__":
     for i in range (0, len(barcode_info)):
         if count_points_component[labels[i]] > 1:
             barcode_info[i][3] = index_dict[labels[i]] #2
-        elif connecting_edges[i][i] == 1 and (i in self_loop_found and i in self_loop_found[i]): # that is: self_loop_found[i][i] do exist 
+        elif (i in connecting_edges_dummy and i in connecting_edges_dummy[i]) and \
+        (i in self_loop_found and i in self_loop_found[i]): # that is: self_loop_found[i][i] do exist 
             barcode_info[i][3] = 1
         else: 
             barcode_info[i][3] = 0
@@ -211,10 +252,23 @@ if __name__ == "__main__":
                 if csv_record_final[record_idx][5] == int(args.filter_by_component):
                     csv_record_final_temp.append(csv_record_final[record_idx])                
             elif args.filter_by_annotation!='': 
-                if barcode_type[csv_record_final[record_idx][0]] == args.filter_by_annotation and barcode_type[csv_record_final[record_idx][1]] == args.filter_by_annotation: # if from_node == type and to_node == type
+                if barcode_type[str(csv_record_final[record_idx][0])] == args.filter_by_annotation or barcode_type[str(csv_record_final[record_idx][1])] == args.filter_by_annotation: # if from_node == type and to_node == type
+                    #if 'triad_forming' in barcode_type[str(csv_record_final[record_idx][0])] and 'triad_forming' in barcode_type[str(csv_record_final[record_idx][1])]:
                     csv_record_final_temp.append(csv_record_final[record_idx])   
+
+
                 if csv_record_final[record_idx][5] not in component_dictionary_dummy:
-                    component_dictionary_dummy[csv_record_final[record_idx][5]] = csv_record_final[record_idx]                
+                    component_dictionary_dummy[csv_record_final[record_idx][5]] = csv_record_final[record_idx]    
+
+            elif args.annotation_group != '': 
+                if barcode_type[str(csv_record_final[record_idx][0])] in args.filter_by_annotation and barcode_type[str(csv_record_final[record_idx][1])] in args.filter_by_annotation: # if from_node == ty>
+                    #if 'triad_forming' in barcode_type[str(csv_record_final[record_idx][0])] and 'triad_forming' in barcode_type[str(csv_record_final[record_idx][1])]:
+                    csv_record_final_temp.append(csv_record_final[record_idx])   
+
+
+                if csv_record_final[record_idx][5] not in component_dictionary_dummy:
+                    component_dictionary_dummy[csv_record_final[record_idx][5]] = csv_record_final[record_idx]
+            
             elif args.filter_by_ligand_receptor!='':
                 ligand = (args.filter_by_ligand_receptor).split('-')[0]
                 receptor = (args.filter_by_ligand_receptor).split('-')[1]
@@ -257,7 +311,7 @@ if __name__ == "__main__":
     for record_idx in range (1, len(csv_record_final)-1): #last entry is a dummy for histograms, so ignore it.
         record = csv_record_final[record_idx]
         i = record[6]
-        pathology_label = barcode_type[barcode_info[i][0]]
+        pathology_label = barcode_type[str(barcode_info[i][0])]
         component_label = record[5]
         X = barcode_info[i][1]
         Y = -barcode_info[i][2]
@@ -265,7 +319,7 @@ if __name__ == "__main__":
         active_spot[i].append([pathology_label, component_label, X, Y, opacity])
         
         j = record[7]
-        pathology_label = barcode_type[barcode_info[j][0]]
+        pathology_label = barcode_type[str(barcode_info[j][0])]
         component_label = record[5]
         X = barcode_info[j][1]
         Y = -barcode_info[j][2]
@@ -299,52 +353,68 @@ if __name__ == "__main__":
         if i in active_spot:
             data_list['pathology_label'].append(active_spot[i][0])
             data_list['component_label'].append(active_spot[i][1])
-            data_list['X'].append(active_spot[i][2])
-            data_list['Y'].append(active_spot[i][3])
+            data_list['X'].append(active_spot[i][2]) # * args.spread_time)
+            data_list['Y'].append(active_spot[i][3]) # * args.spread_time)
             data_list['opacity'].append((active_spot[i][4]-min_opacity)/(max_opacity-min_opacity))
             
         else:
-            data_list['pathology_label'].append(barcode_type[barcode_info[i][0]])
+            data_list['pathology_label'].append(barcode_type[str(barcode_info[i][0])])
             data_list['component_label'].append(0) # make it zero so it is black
-            data_list['X'].append(barcode_info[i][1])
-            data_list['Y'].append(-barcode_info[i][2])
+            data_list['X'].append(barcode_info[i][1]) #  * args.spread_time)
+            data_list['Y'].append(-barcode_info[i][2]) #  * args.spread_time)
             data_list['opacity'].append(0.1)
             # barcode_info[i][3] = 0
 
 
 
     # converting to pandas dataframe
+    if args.spread_time == 1.0:
+        data_list_pd = pd.DataFrame(data_list)
+        id_label = len(list(set(data_list['component_label']))) # unique_component_count
+        set1 = altairThemes.get_colour_scheme("Set1", id_label)
+        set1[0] = args.no_ccc_color
+        chart = alt.Chart(data_list_pd).mark_point(filled=True, opacity = 1, size = args.point_size).encode(
+            alt.X('X', scale=alt.Scale(zero=False)),
+            alt.Y('Y', scale=alt.Scale(zero=False)),
+            shape = alt.Shape('pathology_label:N'), #shape = "pathology_label",
+            color=alt.Color('component_label:N', scale=alt.Scale(range=set1)),
+            #opacity=alt.Opacity('opacity:N'), #"opacity", 
+            tooltip=['component_label'] #,'opacity'
+        )
+    else:
+        data_list_pd = pd.DataFrame(data_list)
+        id_label = len(list(set(data_list['component_label']))) # unique_component_count
+        set1 = altairThemes.get_colour_scheme("Set1", id_label)
+        set1[0] = args.no_ccc_color
+        chart = alt.Chart(data_list_pd).mark_point(filled=True, opacity = 1, size = args.point_size).encode(
+            alt.X('X', scale=alt.Scale(zero=False)),
+            alt.Y('Y', scale=alt.Scale(zero=False)),
+            shape = alt.Shape('pathology_label:N'), #shape = "pathology_label",
+            color=alt.Color('component_label:N', scale=alt.Scale(range=set1)),
+            #opacity=alt.Opacity('opacity:N'), #"opacity", 
+            tooltip=['component_label'] #,'opacity'
+        ).properties(
+        width=args.spread_time,  # Increase the step value to increase spacing
+        height=args.spread_time
+        )
 
-    data_list_pd = pd.DataFrame(data_list)
-    id_label = len(list(set(data_list['component_label']))) # unique_component_count
-    set1 = altairThemes.get_colour_scheme("Set1", id_label)
-    set1[0] = '#000000'
-    chart = alt.Chart(data_list_pd).mark_point(filled=True, opacity = 1).encode(
-        alt.X('X', scale=alt.Scale(zero=False)),
-        alt.Y('Y', scale=alt.Scale(zero=False)),
-        shape = alt.Shape('pathology_label:N'), #shape = "pathology_label",
-        color=alt.Color('component_label:N', scale=alt.Scale(range=set1)),
-        #opacity=alt.Opacity('opacity:N'), #"opacity", 
-        tooltip=['component_label'] #,'opacity'
-    )
-
-    chart.save(output_name +'_component_plot.html')
-    print('Altair plot generation done')
+    chart.save(output_name +'_component_plot_'+str(args.top_edge_count) +'.html')
+    print('Altair plot generation done: '+output_name +'_component_plot_'+str(args.top_edge_count) +'.html')
 
     ###################################  Histogram plotting #################################################################################
 
     df = pd.DataFrame(csv_record_final)
-    df.to_csv('temp_csv.csv', index=False, header=False)
-    df = pd.read_csv('temp_csv.csv', sep=",")
-    os.remove('temp_csv.csv') # delete the intermediate file
+    df.to_csv(temp_file_name+'temp_csv.csv', index=False, header=False)
+    df = pd.read_csv(temp_file_name+'temp_csv.csv', sep=",")
+    os.remove(temp_file_name+'temp_csv.csv') # delete the intermediate file
 
     print('len of loaded csv for histogram generation is %d'%len(df))
     df = preprocessDf(df)
     p = plot(df)
-    outPath = output_name +'_histogram_byFrequency_plot.html'
+    outPath = output_name +'_histogram_byFrequency_plot_top'+str(args.top_edge_count) +'.html'
     p.save(outPath)	
-    print('Histogram plot generation done')
-
+    print('Histogram plot generation done: '+ outPath)
+    
     ################################# Save the histograms in a table format ########################################
 
     hist_count = defaultdict(list)
@@ -372,8 +442,8 @@ if __name__ == "__main__":
         'Total Count': data_list['Y']
     })
   
-    data_list_pd.to_csv(output_name +'_histogram_byFrequency_table.csv', index=False)
-    print(output_name +'_histogram_byFrequency_table.csv')    
+    data_list_pd.to_csv(output_name +'_histogram_byFrequency_table_top'+str(args.top_edge_count) +'.csv', index=False)
+    print(output_name +'_histogram_byFrequency_table_top'+str(args.top_edge_count) +'.csv')    
 
   
     ###############################################################################################################  
@@ -408,15 +478,15 @@ if __name__ == "__main__":
 
     set1 = altairThemes.get_colour_scheme("Set1", unique_component_count)
     colors = set1
-    colors[0] = '#000000' # black means no CCC
+    colors[0] = args.no_ccc_color # black means no CCC
     ids = []
     x_index=[]
     y_index=[]
     colors_point = []
     for i in range (0, len(barcode_info)):    
         ids.append(i)
-        x_index.append(barcode_info[i][1])
-        y_index.append(barcode_info[i][2])    
+        x_index.append(barcode_info[i][1]  * args.spread_time)
+        y_index.append(barcode_info[i][2]  * args.spread_time)    
         colors_point.append(colors[barcode_info[i][3]]) 
     
     max_x = np.max(x_index)
@@ -429,7 +499,7 @@ if __name__ == "__main__":
         marker_size = 'circle'
         label_str =  str(i)+'_c:'+str(barcode_info[i][3]) #  label of the node or spot is consists of: spot id, component number
         if args.annotation_file_path != '':
-            label_str = label_str +'_'+ barcode_type[barcode_info[i][0]] # also add the type of the spot to the label if annotation is available 
+            label_str = label_str +'_'+ barcode_type[str(barcode_info[i][0])] # also add the type of the spot to the label if annotation is available 
         
         g.add_node(int(ids[i]), x=int(x_index[i]), y=int(y_index[i]), label = label_str, pos = str(x_index[i])+","+str(-y_index[i])+" !", physics=False, shape = marker_size, color=matplotlib.colors.rgb2hex(colors_point[i]))    
 
@@ -464,10 +534,10 @@ if __name__ == "__main__":
 
     nt = Network( directed=True, height='1000px', width='100%') #"500px", "500px",, filter_menu=True     
     nt.from_nx(g)
-    nt.save_graph(output_name +'_mygraph.html')
-    print('Edge graph plot generation done')
+    nt.save_graph(output_name +'_mygraph_top'+ str(args.top_edge_count) +'.html')
+    print('Edge graph plot generation done: '+output_name +'_mygraph_top'+ str(args.top_edge_count) +'.html')
     ########################################################################
     # convert it to dot file to be able to convert it to pdf or svg format for inserting into the paper
-    write_dot(g, output_name + "_test_interactive.dot")
-    print('dot file generation done')
+    write_dot(g, output_name + "_test_interactive_top"+ str(args.top_edge_count) +".dot")
+    print('dot file generation done: '+output_name + "_test_interactive_top"+ str(args.top_edge_count) +".dot")
     print('All done')
