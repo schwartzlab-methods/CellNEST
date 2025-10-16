@@ -26,7 +26,8 @@ import copy
 import argparse
 import gc
 import os
-from scipy.sparse import dok_matrix
+#from scipy.sparse import dok_matrix
+import altair as alt
 
 ##########################################################
 if __name__ == "__main__":
@@ -516,3 +517,69 @@ if __name__ == "__main__":
     df = pd.DataFrame(csv_record) # output 4
     df.to_csv(args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv', index=False, header=False)
     print('Result saved: '+args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv')
+
+    #############################################################################3
+    percentage_value = 100 #20 ##100 #20 # top 20th percentile rank, low rank means higher attention score
+    csv_record_intersect_dict = defaultdict(list)
+    edge_score_intersect_dict = defaultdict(list)
+    for layer in range (0, 2):
+        threshold_up = np.percentile(distribution_rank[layer], percentage_value) #np.round(np.percentile(distribution_rank[layer], percentage_value),2)
+        for i in range (0, len(all_edge_sorted_by_rank[layer])):
+            if all_edge_sorted_by_rank[layer][i][1] <= threshold_up: # because, lower rank means higher strength
+                csv_record_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][1]) # rank 
+                edge_score_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][2]) # score
+    ###########################################################################################################################################
+    ## get the aggregated rank for all the edges ##
+    distribution_temp = []
+    for key_value in csv_record_intersect_dict.keys():  
+        arg_index = np.argmin(csv_record_intersect_dict[key_value]) # layer 0 or 1, whose rank to use  
+        csv_record_intersect_dict[key_value] = np.min(csv_record_intersect_dict[key_value]) # use that rank. smaller rank being the higher attention
+        edge_score_intersect_dict[key_value] = edge_score_intersect_dict[key_value][arg_index] # use that score
+        distribution_temp.append(csv_record_intersect_dict[key_value]) 
+    
+    #################
+    
+    ################################################################################
+    csv_record_dict = copy.deepcopy(csv_record_intersect_dict)
+    
+    ################################################################################
+    score_distribution = []
+    csv_record = []
+    csv_record.append(['from_cell', 'to_cell', 'ligand', 'receptor', 'edge_rank', 'component', 'from_id', 'to_id', 'attention_score']) #, 'deviation_from_median'
+    for key_value in csv_record_dict.keys():
+        item = key_value.split('+')
+        i = int(item[0])
+        j = int(item[1])
+        ligand = item[2]
+        receptor = item[3]        
+        edge_rank = csv_record_dict[key_value]        
+        score = edge_score_intersect_dict[key_value] # weighted average attention score, where weight is the rank, lower rank being higher attention score
+        label = -1 
+        csv_record.append([barcode_info[i][0], barcode_info[j][0], ligand, receptor, edge_rank, label, i, j, score])
+        score_distribution.append(score)
+    
+            
+#    print('common LR count %d'%len(csv_record))
+    
+    data_list=dict()
+    data_list['attention_score']=[]
+    for score in score_distribution:
+        data_list['attention_score'].append(score)
+        
+    df = pd.DataFrame(data_list)    
+    chart = alt.Chart(df).transform_density(
+            'attention_score',
+            as_=['attention_score', 'density'],
+        ).mark_area().encode(
+            x="attention_score:Q",
+            y='density:Q',
+        )
+
+    chart.save(args.output_path + args.model_name+'_attention_score_distribution.html')  
+    print(args.output_path + args.model_name+'_attention_score_distribution.html')
+    #skewness_distribution = skew(score_distribution)
+    #print('skewness of the distribution is %g'%skewness_distribution)
+    if args.output_all == 1:
+        df = pd.DataFrame(csv_record) # 
+        df.to_csv(args.output_path + args.model_name+'_allCCC.csv', index=False, header=False)
+        print(args.output_path + args.model_name+'_allCCC.csv')
