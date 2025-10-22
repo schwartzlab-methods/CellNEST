@@ -278,9 +278,9 @@ if __name__ == "__main__":
                 csv_record_final_temp.append(csv_record_final[record_idx])
             
     
-        # insert just one record from each other components so that the color scheme does not change in the altair scatter plot and histogram :-(
-        for component_id in component_dictionary_dummy:
-            csv_record_final_temp.append(component_dictionary_dummy[component_id])
+        # insert just one record from each other components so that the color scheme does not change in the altair scatter plot and histogram 
+        #for component_id in component_dictionary_dummy:
+        #    csv_record_final_temp.append(component_dictionary_dummy[component_id])
         
         csv_record_final_temp.append(csv_record_final[len(csv_record_final)-1])
         csv_record_final = copy.deepcopy(csv_record_final_temp)
