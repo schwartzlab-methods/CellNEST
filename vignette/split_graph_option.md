@@ -49,6 +49,9 @@ It generates the component plots and histograms as follows:
 ![](../images/histograms_luad_split.png)
 
 
+If you want to plot all communication, just use --top_edge_count=-1. Controlling this parameter you can visualize disjoint compartment of communication.
+
+
 If you are using singularity image, then preceed the above commands with 
 ```
 singularity run  --nv --home=<path to the directory having container image>  nest_image.sif
