@@ -41,7 +41,11 @@ if __name__ == "__main__":
     parser.add_argument( '--block_autocrine', type=int, default=0 , help='Set to 1 if you want to ignore autocrine signals.') 
     parser.add_argument( '--block_juxtacrine', type=int, default=0, help='Set to 1 if you want to ignore juxtacrine signals.')     
     parser.add_argument( '--database_path', type=str, default='database/CellNEST_database.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database.') 
-    
+    parser.add_argument( '--set_ROI', type=int, default=0, help='Set to 1 if you want to use ROI')
+    parser.add_argument( '--x_min', type=int, default=-1, help='Set if you want to use ROI')
+    parser.add_argument( '--x_max', type=int, default=-1, help='Set if you want to use ROI')
+    parser.add_argument( '--y_min', type=int, default=-1, help='Set if you want to use ROI')
+    parser.add_argument( '--y_max', type=int, default=-1, help='Set if you want to use ROI')
     args = parser.parse_args()
     
     if args.data_to == 'input_graph/':
@@ -86,7 +90,31 @@ if __name__ == "__main__":
             gene_count_after = len(list(adata_h5.var_names) )  
             print('Gene filtering done. Number of genes reduced from %d to %d'%(gene_count_before, gene_count_after))
             gene_ids = list(adata_h5.var_names)
-            coordinates = adata_h5.obsm['spatial']
+            coordinates = np.array(adata_h5.obsm['spatial'])
+            if args.set_ROI == 1:
+                if args.x_min == -1:
+                    args.x_min = np.min(coordinates[:][0])
+                if args.x_max == -1:
+                    args.x_max = np.max(coordinates[:][0])
+                if args.y_min == -1:
+                    args.y_min = np.min(coordinates[:][1])
+                if args.y_max == -1:
+                    args.y_max = np.max(coordinates[:][1])
+
+                keep_cells = []
+                for i in range(0, coordinates.shape[0]):
+                    if args.x_min <= coordinates[i][0] and coordinates[i][0] <= args.x_max:
+                        if args.y_min <= coordinates[i][1] and coordinates[i][1] <= args.y_max:
+                            keep_cells.append(i)
+
+                adata_h5 = adata_h5[keep_cells]
+                print('after ROI cropping:')
+
+            print(adata_h5)
+
+
+
+
             cell_barcode = np.array(adata_h5.obs_names) #obs.index)
             print('Number of barcodes: %d'%cell_barcode.shape[0])
             print('Applying quantile normalization')
@@ -167,7 +195,7 @@ if __name__ == "__main__":
         distances, indices = nbrs.kneighbors(coordinates)
 
     unique_distances = np.unique(distances)
-    distance_a_b = unique_distances[1]
+    distance_a_b = sorted(unique_distances[1])
     # distances: array of shape (n_cells, k) with the Euclidean distance from 
     # each cell to its k neighbors.
     # indices: array of shape (n_cells, k) with the neighbor indices (row indices of X).
@@ -294,15 +322,23 @@ if __name__ == "__main__":
     ###################################################################################
 
     #####################################################################################
+    # Set threshold gene percentile
     cell_percentile = []
     for i in range (0, cell_vs_gene.shape[0]):
         y = sorted(cell_vs_gene[i]) # sort each row/cell in ascending order of gene expressions
         ## inter ##
         active_cutoff = np.percentile(y, args.threshold_gene_exp)
         if active_cutoff == min(cell_vs_gene[i][:]):
-            active_cutoff = max(cell_vs_gene[i][:])
-            #all_deactive_count = all_deactive_count + 1
-        cell_percentile.append(active_cutoff) 
+            times = 1
+            while active_cutoff == min(cell_vs_gene[i][:]):
+                new_threshold = args.threshold_gene_exp + 5 * times                    
+                if new_threshold >= 100:
+                    active_cutoff = max(cell_vs_gene[i][:])  
+                    break
+                active_cutoff = np.percentile(y, new_threshold)
+                times = times + 1 
+
+        cell_percentile.append(active_cutoff)     
 
     print('set threshold gene percentile done')
     ##############################################################################
@@ -326,14 +362,10 @@ if __name__ == "__main__":
     print('some preprocessing before making the input graph')    
     for g in range(start_index, end_index): 
         gene = ligand_list[g]
-        for i in range (0, cell_vs_gene.shape[0]): # ligand
-              
+        for i in weightdict_i_to_j:
             if cell_vs_gene[i][gene_index[gene]] < cell_percentile[i]:
-                continue
-            
-            for j in range (0, cell_vs_gene.shape[0]): # receptor
-                if i not in weightdict_i_to_j or j not in weightdict_i_to_j[i]: #dist_X[i,j]==0: 
-                    continue
+                continue            
+            for j in weightdict_i_to_j[i]: # receptor
                 if args.block_autocrine == 1 and i==j:
                     continue
                 for gene_rec in ligand_dict_dataset[gene]:
