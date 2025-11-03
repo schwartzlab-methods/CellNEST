@@ -195,7 +195,7 @@ if __name__ == "__main__":
         distances, indices = nbrs.kneighbors(coordinates)
 
     unique_distances = np.unique(distances)
-    distance_a_b = sorted(unique_distances[1])
+    distance_a_b = sorted(unique_distances)[1]
     # distances: array of shape (n_cells, k) with the Euclidean distance from 
     # each cell to its k neighbors.
     # indices: array of shape (n_cells, k) with the neighbor indices (row indices of X).
