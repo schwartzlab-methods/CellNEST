@@ -16,6 +16,7 @@ cellnest visualize --data_name='V1_Human_Lymph_Node_spatial' --model_name 'CellN
 ![png file of the generated altair plot for top 40000 CCC](../images/altair_plot_human_lymph_top3000_comp7.png)
 ![screenshot of the generated histogram plot for top 40000 CCC](../images/histogram_human_lymph_top3000_comp7.png)
 
+Usually, we want to use all the strongest communication detected by CellNEST while looking for specific cell type or ligand-receptor pair. For that purpose, we set  --top_edge_count=-1, which basically ignores this parameter for edge filtering, and plot all the interaction by target cell type or ligand-receptor pair detected by the model.
 
 ## Filter by annotation
 ````
@@ -26,8 +27,10 @@ cellnest visualize --data_name='V1_Human_Lymph_Node_spatial' --model_name='CellN
 
 ## Filter by ligand-receptor pair
 
+
+
 ```
-cellnest visualize --data_name='V1_Human_Lymph_Node_spatial' --model_name='CellNEST_V1_Human_Lymph_Node_spatial' --top_edge_count=400000 --filter=1 --filter_by_ligand_receptor='CCL19-CCR7'
+cellnest visualize --data_name='V1_Human_Lymph_Node_spatial' --model_name='CellNEST_V1_Human_Lymph_Node_spatial' --top_edge_count=-1 --filter=1 --filter_by_ligand_receptor='CCL19-CCR7'
 ```
 
 ![png file of the generated altair plot for top 40000 CCC](../images/altair_plot_human_lymph_top400000_ccl19_ccr7.png)
