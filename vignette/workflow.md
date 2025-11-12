@@ -1,13 +1,17 @@
 
+CellNEST needs raw gene count data as input. However, CellNEST pipeline does not perform any QC for cell filtering. So please run the QC pipeline beforehand if it deems necessary. But do not normalize or log tranform the gene count matrix as CellNEST has its own pipeline for doing that. 
+
+
 This workflow will use the Visium sample on human lymph node as a use case (https://www.10xgenomics.com/datasets/human-lymph-node-1-standard-1-1-0) for the demonstration purpose. Please download the following two files:
 
 a. The filtered feature matrix from here: https://cf.10xgenomics.com/samples/spatial-exp/1.1.0/V1_Human_Lymph_Node/V1_Human_Lymph_Node_filtered_feature_bc_matrix.h5
 
 b. The spatial imaging data from here: https://cf.10xgenomics.com/samples/spatial-exp/1.1.0/V1_Human_Lymph_Node/V1_Human_Lymph_Node_spatial.tar.gz (please unzip the spatial imaging data)
 
-Both should be kept under the same directory, e.g., data/V1_Human_Lymph_Node_spatial/ directory. We have provided a default ligand-receptor database by merging the records from CellChat and NicheNet database. This is kept under 'database/' directory and will be used by CellNEST unless some other database is referred by the user.   
+Both should be kept under the same directory, e.g., data/V1_Human_Lymph_Node_spatial/ directory. We have provided a default ligand-receptor database by merging the records from CellChat and NicheNet database. This is kept under 'database/' directory and will be used by CellNEST unless some other database is referred by the user. Note that, it also includes some computationally predicted ones. If you want to use only manually curated ligand-receptor pairs, please set: --database_path='database/CellNEST_database_no_predictedPPI.csv'. Also, to ignore autocrine signals, you may set --block_autocrine=1.   
 
 Change your current working directory to the downloaded CellNEST repository to run our model.
+
 
 ## Expected run time
 
