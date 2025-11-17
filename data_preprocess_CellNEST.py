@@ -334,6 +334,9 @@ if __name__ == "__main__":
                 new_threshold = args.threshold_gene_exp + 5 * times                    
                 if new_threshold >= 100:
                     active_cutoff = max(cell_vs_gene[i][:])  
+                    if active_cutoff == min(cell_vs_gene[i][:]): # still same as the min --> flat curve: something wrong
+                        active_cutoff = max(cell_vs_gene[i][:]) + 1 # This cell will be skipped
+
                     break
                 active_cutoff = np.percentile(y, new_threshold)
                 times = times + 1 
