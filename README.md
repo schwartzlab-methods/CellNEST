@@ -81,6 +81,8 @@ cellnest visualize --data_name='V1_Human_Lymph_Node_spatial' --model_name='CellN
 
 This step generates [six files](https://github.com/schwartzlab-methods/CellNEST/blob/main/vignette/user_guide.md#output) under the directory 'output/V1_Human_Lymph_Node_spatial/' inlcluding a NetworkX plot for visualizing the CCC. 
  
+## Converting the *.dot files to PDF or SVG for better sharing:
+ 
 Although the NetworkX plot shows the appealing view of CCC, it can be very big and memory-consuming to open in the web-browser and inconvenient to share. Therefore we prefer to convert the corresponding *.dot file to a *.pdf and *.svg file by executing the following command (takes input the path of *.dot file as an argument): 
 
 ```
