@@ -43,11 +43,11 @@ Change your current working directory to the downloaded CellNEST repository. The
    
 1. CellNEST takes two main inputs: spatial transcriptomics dataset and a ligand-receptor database. Assuming that the spatial dataset is in "data/V1_Human_Lymph_Node_spatial/" directory and the ligand-receptor database is in 'database/CellNEST_database.csv', data preprocessing for input graph generation can be done as follows:
 ````
-cellnest preprocess --data_name='V1_Human_Lymph_Node_spatial' --data_from='data/V1_Human_Lymph_Node_spatial/'
+cellnest preprocess --data_name='V1_Human_Lymph_Node_spatial' --data_from='data/V1_Human_Lymph_Node_spatial/' --data_type=visium
 ````
 It will create two folders in the current working directories: "input_graph/V1_Human_Lymph_Node_spatial/" and "metadata/V1_Human_Lymph_Node_spatial/" to save the preprocessed input data. Additionally, if you want to integrate intracellular pathway with ligand-receptor coexpression, please use following command with additional parameter: --add_intra=1
 ```
-cellnest preprocess_intra --data_name='V1_Human_Lymph_Node_spatial' --data_from='data/V1_Human_Lymph_Node_spatial/' --add_intra=1
+cellnest preprocess_intra --data_name='V1_Human_Lymph_Node_spatial' --data_from='data/V1_Human_Lymph_Node_spatial/' --add_intra=1 --data_type=visium
 ```
 
 Please use the argument --help to see all available input parameters.  
