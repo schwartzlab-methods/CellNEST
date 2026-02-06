@@ -28,7 +28,7 @@ This method applies Quantile normalization on the gene expression matrix and gen
 Lower values for --threshold_gene_exp and --filter_min_cell will generate more connections and higher values will generate less number of connections in the input graph which largly decides how much GPU memory will the model use. We try to generate as many connections as we can to predict more CCC at the end. For example, the results presented in our paper was generated using this preprocessing command:
 ````
 cellnest preprocess --data_name='V1_Human_Lymph_Node_spatial' --data_from='data/V1_Human_Lymph_Node_spatial/' --filter_min_cell=1 --data_type=visium
-````
+```` 
 
 The --data_name parameter is used to decide the target directories to save the processed data. For example, above command creates two folders in the current working directories: 
 1. "input_graph/V1_Human_Lymph_Node_spatial/": Contains

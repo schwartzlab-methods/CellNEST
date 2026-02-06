@@ -39,7 +39,7 @@ Both should be kept under the same directory, e.g., data/V1_Human_Lymph_Node_spa
 **NOTE**: By default, CellNEST uses a database that combines multiple sources, including the computationally predicted ones. If you want to use only manually curated ligand-receptor pairs, please set: --database_path='database/CellNEST_database_no_predictedPPI.csv'. Also, if you are working with single-cell resolution data, use additional parameter --distance_measure='knn' [[here](vignette/split_graph_option.md)]. To ignore autocrine signals, you may set --block_autocrine=1.   
 
 Change your current working directory to the downloaded CellNEST repository. Then execute following commands to run CellNEST on the human lymph node sample. 
-
+ 
    
 1. CellNEST takes two main inputs: spatial transcriptomics dataset and a ligand-receptor database. Assuming that the spatial dataset is in "data/V1_Human_Lymph_Node_spatial/" directory and the ligand-receptor database is in 'database/CellNEST_database.csv', data preprocessing for input graph generation can be done as follows:
 ````
