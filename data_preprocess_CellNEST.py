@@ -27,7 +27,7 @@ if __name__ == "__main__":
     parser.add_argument( '--data_name', type=str, help='Name of the dataset', required=True)  
     parser.add_argument( '--data_from', type=str, required=True, help='Path to the dataset to read from. Space Ranger outs/ folder is preferred. Otherwise, provide the *.mtx file of the gene expression matrix.')
     ################# default is set ################################################################
-    parser.add_argument( '--data_type', type=str, default='visium', help='Set one of these two types [visium, anndata]')
+    parser.add_argument( '--data_type', type=str, default='anndata', help='Set one of these two types [visium, anndata]. visium refers to spot based Visium file.')
     parser.add_argument( '--data_to', type=str, default='input_graph/', help='Path to save the input graph (to be passed to GAT)')
     parser.add_argument( '--metadata_to', type=str, default='metadata/', help='Path to save the metadata')
     parser.add_argument( '--filter_min_cell', type=int, default=1 , help='Minimum number of cells for gene filtering') 
@@ -69,6 +69,7 @@ if __name__ == "__main__":
             gene_count_after = len(list(adata_h5.var_names) )  
             print('Gene filtering done. Number of genes reduced from %d to %d'%(gene_count_before, gene_count_after))
             gene_ids = list(adata_h5.var_names)
+            gene_ids = [gene_id.upper() for gene_id in gene_ids]
             coordinates = adata_h5.obsm['spatial']
             cell_barcode = np.array(adata_h5.obs.index)
             print('Number of barcodes: %d'%cell_barcode.shape[0])
@@ -90,6 +91,7 @@ if __name__ == "__main__":
             gene_count_after = len(list(adata_h5.var_names) )  
             print('Gene filtering done. Number of genes reduced from %d to %d'%(gene_count_before, gene_count_after))
             gene_ids = list(adata_h5.var_names)
+            gene_ids = [gene_id.upper() for gene_id in gene_ids]
             coordinates = np.array(adata_h5.obsm['spatial'])
             if args.set_ROI == 1:
                 if args.x_min == -1:
@@ -129,6 +131,7 @@ if __name__ == "__main__":
         gene_count_after = len(list(temp.var_names) )
         print('Gene filtering done. Number of genes reduced from %d to %d'%(gene_count_before, gene_count_after))
         gene_ids = list(temp.var_names) 
+        gene_ids = [gene_id.upper() for gene_id in gene_ids]
         cell_barcode = np.array(temp.obs.index)
         print('Number of barcodes: %d'%cell_barcode.shape[0])
         print('Applying quantile normalization')
