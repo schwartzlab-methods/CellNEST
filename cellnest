@@ -3,7 +3,7 @@
 if [ $1 = "preprocess" ] 
 then 
   shift
-  python -u data_preprocess_CellNEST.py $@
+  python -u data_preprocess_CellNEST.py "$@"
 elif [ $1 = "run" ]
 then
   shift
@@ -11,49 +11,49 @@ then
 elif [ $1 = "postprocess" ] 
 then
   shift
-  python -u output_postprocess_CellNEST.py $@
+  python -u output_postprocess_CellNEST.py "$@"
 elif [ $1 = "postprocess_split" ] 
 then
   shift
-  python -u output_postprocess_CellNEST_split.py $@
+  python -u output_postprocess_CellNEST_split.py "$@"
 elif [ $1 = "visualize" ] 
 then
   shift
-  python -u output_visualization_CellNEST.py $@
+  python -u output_visualization_CellNEST.py "$@"
 elif [ $1 = "interactive" ] 
 then
   shift
   cd $1
   shift
-  bash nest_interactive $@ 
+  bash nest_interactive "$@"
 elif [ $1 = "output_graph_picture" ] 
 then
   shift
-  bash dot_to_pdf_svg.sh $@
+  bash dot_to_pdf_svg.sh "$@"
 elif [ $1 = "relay_celltype" ] 
 then
   shift
-  python -u relay_cell_type.py $@
+  python -u relay_cell_type.py "$@"
 elif [ $1 = "relay_confidence" ] 
 then
   shift
-  python -u relay_confidence.py $@
+  python -u relay_confidence.py "$@"
 elif [ $1 = "relay_extract" ] 
 then
   shift
-  python -u extract_relay_nest.py $@
+  python -u extract_relay_nest.py "$@"
 elif [ $1 = "preprocess_intra" ] 
 then
   shift
-  python -u data_preprocess_intra_CellNEST.py $@
+  python -u data_preprocess_intra_CellNEST.py "$@"
 elif [ $1 = "downstream" ] 
 then
   shift
-  python -u plot_downstream_genes.py $@
-elif [ $1 = "confidence_interval" ] 
+  python -u plot_downstream_genes.py "$@"
+elif [ $1 = "confidence_interval" ]
 then
   shift
-  python -u confidence_interval_CellNEST.py $@
+  python -u confidence_interval_CellNEST.py "$@"
 fi
 
 
