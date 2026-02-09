@@ -1,4 +1,4 @@
-Ligand,Receptor,Annotation,Reference
+source,target,mode,confidence_score
 Myc,Tert,1,1.0
 Stat3,Il6,1,1.0
 Nfkb1,Hmox1,1,1.0
