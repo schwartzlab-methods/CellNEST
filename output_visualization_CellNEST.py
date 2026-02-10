@@ -329,7 +329,7 @@ if __name__ == "__main__":
         
     ######### color the spots in the plot with opacity = attention score #################
     if len(active_spot)==0:
-        print('No active spots found for plotting the altair component plot')
+        print('No active spots found; skipping Altair component plot and all downstream visualizations, exiting script.')
         exit(0)
     opacity_list = []
     for i in active_spot:
