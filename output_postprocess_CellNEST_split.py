@@ -44,7 +44,7 @@ if __name__ == "__main__":
     parser.add_argument( '--output_path', type=str, default='output/', help='Path to save the visualization results, e.g., histograms, graph etc.')
     parser.add_argument( '--top_percent', type=int, default=20, help='Top N percentage communications to pick')
     parser.add_argument( '--output_all', type=int, default=1, help='Set it to 1 to output all communications')
-
+    parser.add_argument( '--integrate_layers', type=int, default=1, help='Set it to 1 to output strictly top percent number of edges.')
     args = parser.parse_args()
 
     args.metadata_from = args.metadata_from + args.data_name + '/'
@@ -287,105 +287,10 @@ if __name__ == "__main__":
                         distribution.append(scaled_score)
 
             print('attention score is scaled between %g to %g for ensemble'%(np.min(distribution), np.max(distribution)))
-            #print('min attention score %g, total edges %d'%(min_attention_score, len(distribution)))
-            
-            '''
-            threshold_down =  np.percentile(sorted(distribution), 0)
-            threshold_up =  np.percentile(sorted(distribution), 100)
-            
-            ccc_index_dict = dict()
-            connecting_edges_dummy = defaultdict(dict) 
-            #connecting_edges = defaultdict(dict) #np.zeros((datapoint_size,datapoint_size))
-            for i  in attention_scores:             
-                for j in attention_scores[i]:
-                    atn_score_list = attention_scores[i][j]
-                    for k in range (0, len(atn_score_list)):
-                        if attention_scores[i][j][k] >= threshold_down and attention_scores[i][j][k] <= threshold_up: #np.percentile(sorted(distribution), 50):
-                            connecting_edges_dummy[i][j] = 1
-                            #connecting_edges[i][j] = 1
-                            ccc_index_dict[i] = ''
-                            ccc_index_dict[j] = ''
-        
-        
-            # Find matrix dimensions
-            n_rows = datapoint_size
-            n_cols = datapoint_size
-            # Create sparse DOK matrix
-            connecting_edges = dok_matrix((n_rows, n_cols), dtype=np.float32)
- 
-            # Fill it
-            for i, row_dict in connecting_edges_dummy.items():
-                for j, val in row_dict.items():
-                    connecting_edges[i, j] = val
 
-            
-            graph = csr_matrix(connecting_edges)
-            n_components, labels = connected_components(csgraph=graph, directed=True, connection = 'weak',  return_labels=True) #
-            #print('number of component %d'%n_components)
-        
-            count_points_component = np.zeros((n_components))
-            for i in range (0, len(labels)):
-                 count_points_component[labels[i]] = count_points_component[labels[i]] + 1
-        
-            #print(count_points_component)
-        
-            id_label = 2 # initially all are zero. =1 those who have self edge but above threshold. >= 2 who belong to some component
-            index_dict = dict()
-            for i in range (0, count_points_component.shape[0]):
-                if count_points_component[i]>1:
-                    index_dict[i] = id_label
-                    id_label = id_label+1
-        
-            #print('number of components with multiple datapoints is %d'%id_label)
-        
-        
-            for i in range (0, len(barcode_info)): 
-                #if i not in nodes_active:
-                #    continue
-                split_i = unfiltered_index_to_filtered_serial[i]
-                #print(labels[split_i])
-                if count_points_component[labels[split_i]] > 1:
-                    barcode_info[i][3] = index_dict[labels[split_i]] #2
-                elif split_i in connecting_edges_dummy and split_i in connecting_edges_dummy[split_i] and \
-                    (i in lig_rec_dict and i in lig_rec_dict[i] and len(lig_rec_dict[i][i])>0): 
-                    barcode_info[i][3] = 1
-                else:
-                    barcode_info[i][3] = 0
-            
-            
-            
-            
-            '''
             # print('PASSED')
             ###############
-            '''
-            csv_record = []
-            csv_record.append(['from_cell', 'to_cell', 'ligand', 'receptor', 'attention_score', 'component', 'from_id', 'to_id'])
-            
-            for j in range (0, len(barcode_info)):
-                for i in range (0, len(barcode_info)):
-                    #if i not in nodes_active or j not in nodes_active:
-                    #    continue
-                    if i==j:
-                        if (i not in lig_rec_dict or j not in lig_rec_dict[i]):
-                            continue
-                            
-                    split_i = unfiltered_index_to_filtered_serial[i] 
-                    split_j = unfiltered_index_to_filtered_serial[j]
-                    if split_i not in attention_scores or split_j not in attention_scores[split_i]:
-                        continue
- 
-                    atn_score_list = attention_scores[split_i][split_j]
-                    for k in range (0, len(atn_score_list)):
-                        if attention_scores[split_i][split_j][k] >= threshold_down and attention_scores[split_i][split_j][k] <= threshold_up: 
-                            if barcode_info[i][3]==0:
-                                print('edge not found')
-                            elif barcode_info[i][3]==1:
-                                csv_record.append([barcode_info[i][0], barcode_info[j][0], lig_rec_dict[i][j][k][0], lig_rec_dict[i][j][k][1], attention_scores[split_i][split_j][k], '0-single', i, j])
-                            else:
-                                csv_record.append([barcode_info[i][0], barcode_info[j][0], lig_rec_dict[i][j][k][0], lig_rec_dict[i][j][k][1], attention_scores[split_i][split_j][k], barcode_info[i][3], i, j])
-            
-            '''
+
             csv_record = []
             csv_record.append(['from_cell', 'to_cell', 'ligand', 'receptor', 'attention_score', 'component', 'from_id', 'to_id'])
             for i in lig_rec_dict:
@@ -397,10 +302,6 @@ if __name__ == "__main__":
  
                     atn_score_list = attention_scores[split_i][split_j]
                     for k in range (0, len(atn_score_list)):
-                        #if attention_scores[split_i][split_j][k] >= threshold_down and attention_scores[split_i][split_j][k] <= threshold_up: 
-                        #    if barcode_info[i][3]==0:
-                        #        print('edge not found')
-                        #    else:
                         csv_record.append([barcode_info[i][0], barcode_info[j][0], lig_rec_dict[i][j][k][0], lig_rec_dict[i][j][k][1], attention_scores[split_i][split_j][k], barcode_info[i][3], i, j])
      
             ###########	
@@ -459,8 +360,10 @@ if __name__ == "__main__":
         all_edge_sorted_by_rank[layer] = sorted(all_edge_vs_rank, key = lambda x: x[1]) # small rank being high attention 
     
     #############################################################################################################################################
-    # for each layer, I scale the attention scores [0, 1] over all the edges. So that they are comparable or mergeable between layers
-    # for each edge, we have two sets of (rank, score) due to 2 layers. We take union of them.
+    # for each layer, I scale the attention scores [0, 1] over all the edges. 
+    # So that they are comparable or mergeable between layers
+    # for each edge, we have two sets of (rank, score) due to 2 layers. 
+    # We take union of them.
     print('Multiple runs for each layer are ensembled.') 
     for layer in range (0, 2):
         score_min = np.min(distribution_score[layer])
@@ -478,68 +381,75 @@ if __name__ == "__main__":
             distribution_score[layer].append(all_edge_sorted_by_rank[layer][i][2])
     
     ################################ now take the cut-off ###############################################################################################################
-    percentage_value = args.top_percent #20 ##100 #20 # top 20th percentile rank, low rank means higher attention score
+    if args.integrate_layers == 0: 
+        # top N percent of both layers will be taken and merged by union 
+        # - may result in more than 20% edges of total edges since it takes union
+        percentage_value = args.top_percent #20 ##100 #20 # top 20th percentile rank, low rank means higher attention score
+        csv_record_intersect_dict = defaultdict(list)
+        edge_score_intersect_dict = defaultdict(list)
+        for layer in range (0, 2):
+            threshold_up = np.percentile(distribution_rank[layer], percentage_value) #np.round(np.percentile(distribution_rank[layer], percentage_value),2)
+            for i in range (0, len(all_edge_sorted_by_rank[layer])):
+                if all_edge_sorted_by_rank[layer][i][1] <= threshold_up: # because, lower rank means higher strength
+                    csv_record_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][1]) # rank
+                    edge_score_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][2]) # score
+        ###########################################################################################################################################
+        ## get the aggregated rank for all the edges ##
+        distribution_temp = []
+        for key_value in csv_record_intersect_dict.keys():  
+            arg_index = np.argmin(csv_record_intersect_dict[key_value]) # layer 0 or 1, whose rank to use 
+            csv_record_intersect_dict[key_value] = np.min(csv_record_intersect_dict[key_value]) # use that rank. smaller rank being the higher attention
+            edge_score_intersect_dict[key_value] = edge_score_intersect_dict[key_value][arg_index] # use that score
+            distribution_temp.append(csv_record_intersect_dict[key_value]) 
+        
+        #################
+        
+        ################################################################################
+        csv_record_dict = csv_record_intersect_dict
+        csv_record = []
+        csv_record.append(['from_cell', 'to_cell', 'ligand', 'receptor', 'edge_rank', 'component', 'from_id', 'to_id', 'attention_score'])
+        for key_value in csv_record_dict.keys():
+            item = key_value.split('+')
+            i = int(item[0])
+            j = int(item[1])
+            ligand = item[2]
+            receptor = item[3]        
+            edge_rank = csv_record_dict[key_value]        
+            score = edge_score_intersect_dict[key_value] # weighted average attention score, where weight is the rank, lower rank being higher attention score
+            label = -1 
+            csv_record.append([barcode_info[i][0], barcode_info[j][0], ligand, receptor, edge_rank, label, i, j, score])
+
+        print('Strong LR count %d'%len(csv_record))    
+        ##### save the file for downstream analysis ########        
+        df = pd.DataFrame(csv_record) # output 4
+        df.to_csv(args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv', index=False, header=False)
+        print('Result saved: '+args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv')
+
+    #############################################################################
+    percentage_value = 100 #low rank means higher attention score
     csv_record_intersect_dict = defaultdict(list)
     edge_score_intersect_dict = defaultdict(list)
+    # union of layers
     for layer in range (0, 2):
-        threshold_up = np.percentile(distribution_rank[layer], percentage_value) #np.round(np.percentile(distribution_rank[layer], percentage_value),2)
         for i in range (0, len(all_edge_sorted_by_rank[layer])):
-            if all_edge_sorted_by_rank[layer][i][1] <= threshold_up: # because, lower rank means higher strength
-                csv_record_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][1]) # rank
-                edge_score_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][2]) # score
+            csv_record_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][1]) # rank 
+            edge_score_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][2]) # score
     ###########################################################################################################################################
-    ## get the aggregated rank for all the edges ##
-    distribution_temp = []
+    ## get one aggregated rank and score for all the edges ##
+    key_vs_rank = []
     for key_value in csv_record_intersect_dict.keys():  
-        arg_index = np.argmin(csv_record_intersect_dict[key_value]) # layer 0 or 1, whose rank to use 
-        csv_record_intersect_dict[key_value] = np.min(csv_record_intersect_dict[key_value]) # use that rank. smaller rank being the higher attention
-        edge_score_intersect_dict[key_value] = edge_score_intersect_dict[key_value][arg_index] # use that score
-        distribution_temp.append(csv_record_intersect_dict[key_value]) 
-    
-    #################
-    
-    ################################################################################
-    csv_record_dict = csv_record_intersect_dict
-    csv_record = []
-    csv_record.append(['from_cell', 'to_cell', 'ligand', 'receptor', 'edge_rank', 'component', 'from_id', 'to_id', 'attention_score'])
-    for key_value in csv_record_dict.keys():
-        item = key_value.split('+')
-        i = int(item[0])
-        j = int(item[1])
-        ligand = item[2]
-        receptor = item[3]        
-        edge_rank = csv_record_dict[key_value]        
-        score = edge_score_intersect_dict[key_value] # weighted average attention score, where weight is the rank, lower rank being higher attention score
-        label = -1 
-        csv_record.append([barcode_info[i][0], barcode_info[j][0], ligand, receptor, edge_rank, label, i, j, score])
+        #arg_index = np.argmin(csv_record_intersect_dict[key_value]) # layer 0 or 1, whose rank to use  
+        csv_record_intersect_dict[key_value] = np.mean(csv_record_intersect_dict[key_value]) #np.min(csv_record_intersect_dict[key_value]) # use that rank. smaller rank being the higher attention
+        key_vs_rank.append([key_value, csv_record_intersect_dict[key_value]])
+        edge_score_intersect_dict[key_value] = np.mean(edge_score_intersect_dict[key_value]) #edge_score_intersect_dict[key_value][arg_index] # use that score
+         
+    ###############################################################################################################
+    ## Ranks are now floating point. Make them integer.  
+    key_vs_rank = sorted(key_vs_rank, key = lambda x: x[1]) # small rank being high attention 
+    csv_record_intersect_dict = dict()
+    for i in range (0, len(key_vs_rank)):
+        csv_record_intersect_dict[key_vs_rank[i][0]] = i + 1 # ranking starts from index 1
 
-    print('common LR count %d'%len(csv_record))    
-    ##### save the file for downstream analysis ########        
-    df = pd.DataFrame(csv_record) # output 4
-    df.to_csv(args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv', index=False, header=False)
-    print('Result saved: '+args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv')
-
-    #############################################################################3
-    percentage_value = 100 #20 ##100 #20 # top 20th percentile rank, low rank means higher attention score
-    csv_record_intersect_dict = defaultdict(list)
-    edge_score_intersect_dict = defaultdict(list)
-    for layer in range (0, 2):
-        threshold_up = np.percentile(distribution_rank[layer], percentage_value) #np.round(np.percentile(distribution_rank[layer], percentage_value),2)
-        for i in range (0, len(all_edge_sorted_by_rank[layer])):
-            if all_edge_sorted_by_rank[layer][i][1] <= threshold_up: # because, lower rank means higher strength
-                csv_record_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][1]) # rank 
-                edge_score_intersect_dict[all_edge_sorted_by_rank[layer][i][0]].append(all_edge_sorted_by_rank[layer][i][2]) # score
-    ###########################################################################################################################################
-    ## get the aggregated rank for all the edges ##
-    distribution_temp = []
-    for key_value in csv_record_intersect_dict.keys():  
-        arg_index = np.argmin(csv_record_intersect_dict[key_value]) # layer 0 or 1, whose rank to use  
-        csv_record_intersect_dict[key_value] = np.min(csv_record_intersect_dict[key_value]) # use that rank. smaller rank being the higher attention
-        edge_score_intersect_dict[key_value] = edge_score_intersect_dict[key_value][arg_index] # use that score
-        distribution_temp.append(csv_record_intersect_dict[key_value]) 
-    
-    #################
-    
     ################################################################################
     csv_record_dict = copy.deepcopy(csv_record_intersect_dict)
     
@@ -560,8 +470,9 @@ if __name__ == "__main__":
         score_distribution.append(score)
     
             
-#    print('common LR count %d'%len(csv_record))
-    
+
+    print('Total LR edge count %d, top %g percent LR edge count %d'%(len(csv_record), args.top_percent, (len(csv_record)*args.top_percent)//100))    
+    print('Result saved: ')
     data_list=dict()
     data_list['attention_score']=[]
     for score in score_distribution:
@@ -584,3 +495,12 @@ if __name__ == "__main__":
         df = pd.DataFrame(csv_record) # 
         df.to_csv(args.output_path + args.model_name+'_allCCC.csv', index=False, header=False)
         print(args.output_path + args.model_name+'_allCCC.csv')
+
+    if args.integrate_layers == 1:
+        # take top 20% highly ranked edges 
+        csv_record[1:] = sorted(csv_record[1:], key = lambda x: x[4]) # small rank being high attention
+        csv_record = csv_record[0: (len(csv_record)*args.top_percent)//100]
+        ##### save the file for downstream analysis ########        
+        df = pd.DataFrame(csv_record) # output 4
+        df.to_csv(args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv', index=False, header=False)
+        print(args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv')
