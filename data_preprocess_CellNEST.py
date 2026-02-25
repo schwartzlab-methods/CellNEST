@@ -46,6 +46,7 @@ if __name__ == "__main__":
     parser.add_argument( '--x_max', type=int, default=-1, help='Set if you want to use ROI')
     parser.add_argument( '--y_min', type=int, default=-1, help='Set if you want to use ROI')
     parser.add_argument( '--y_max', type=int, default=-1, help='Set if you want to use ROI')
+    parser.add_argument( '--skip_normalize', type=int, default=0, help='Set to 1 if you have QC data, so want to skip normalization')
     args = parser.parse_args()
     
     if args.data_to == 'input_graph/':
@@ -61,7 +62,7 @@ if __name__ == "__main__":
     ####### get the gene id, cell barcode, cell coordinates ######
     print('Input data reading')
     if args.tissue_position_file == 'None': # Data is available in Space Ranger output format
-        if args.data_type == 'visium':
+        if args.data_type == 'visium': # spot-based
             adata_h5 = sc.read_visium(path=args.data_from, count_file='filtered_feature_bc_matrix.h5')
             print('input data read done')
             gene_count_before = len(list(adata_h5.var_names) )    
@@ -73,9 +74,15 @@ if __name__ == "__main__":
             coordinates = adata_h5.obsm['spatial']
             cell_barcode = np.array(adata_h5.obs.index)
             print('Number of barcodes: %d'%cell_barcode.shape[0])
-            print('Applying quantile normalization')
-            temp = qnorm.quantile_normalize(np.transpose(sparse.csr_matrix.toarray(adata_h5.X)))  #https://en.wikipedia.org/wiki/Quantile_normalization
-            cell_vs_gene = np.transpose(temp)
+            if args.skip_normalize == 0:
+                print('Applying quantile normalization')
+                temp = qnorm.quantile_normalize(np.transpose(sparse.csr_matrix.toarray(adata_h5.X)))  #https://en.wikipedia.org/wiki/Quantile_normalization
+                cell_vs_gene = np.transpose(temp)
+
+            else:
+                cell_vs_gene = sparse.csr_matrix.toarray(adata_h5.X)
+                row_mins = cell_vs_gene.min(axis=1)
+                cell_vs_gene = cell_vs_gene - row_mins[:, np.newaxis]
             ####### use the spot diameter as the --juxtacrine_distance
             if args.juxtacrine_distance == -1:
                 file = open(args.data_from+'/spatial/scalefactors_json.json', 'r')
@@ -114,14 +121,19 @@ if __name__ == "__main__":
 
             print(adata_h5)
 
-
-
-
             cell_barcode = np.array(adata_h5.obs_names) #obs.index)
             print('Number of barcodes: %d'%cell_barcode.shape[0])
-            print('Applying quantile normalization')
-            temp = qnorm.quantile_normalize(np.transpose(sparse.csr_matrix.toarray(adata_h5.X)))  #https://en.wikipedia.org/wiki/Quantile_normalization
-            cell_vs_gene = np.transpose(temp)
+            if args.skip_normalize == 0:
+                print('Applying quantile normalization')
+                temp = qnorm.quantile_normalize(np.transpose(sparse.csr_matrix.toarray(adata_h5.X)))  #https://en.wikipedia.org/wiki/Quantile_normalization
+                cell_vs_gene = np.transpose(temp)
+
+            else:
+                cell_vs_gene = sparse.csr_matrix.toarray(adata_h5.X)
+                row_mins = cell_vs_gene.min(axis=1)
+                cell_vs_gene = cell_vs_gene - row_mins[:, np.newaxis]
+
+
     else: # Data is not available in Space Ranger output format
         # read the mtx file
         temp = sc.read_10x_mtx(args.data_from)
@@ -134,10 +146,15 @@ if __name__ == "__main__":
         gene_ids = [gene_id.upper() for gene_id in gene_ids]
         cell_barcode = np.array(temp.obs.index)
         print('Number of barcodes: %d'%cell_barcode.shape[0])
-        print('Applying quantile normalization')
-        temp = qnorm.quantile_normalize(np.transpose(sparse.csr_matrix.toarray(temp.X)))  #https://en.wikipedia.org/wiki/Quantile_normalization
-        cell_vs_gene = np.transpose(temp)  
-    
+        if args.skip_normalize == 0:
+            print('Applying quantile normalization')
+            temp = qnorm.quantile_normalize(np.transpose(sparse.csr_matrix.toarray(temp.X)))  #https://en.wikipedia.org/wiki/Quantile_normalization
+            cell_vs_gene = np.transpose(temp)
+
+        else:
+            cell_vs_gene = sparse.csr_matrix.toarray(temp.X)
+            row_mins = cell_vs_gene.min(axis=1)
+            cell_vs_gene = cell_vs_gene - row_mins[:, np.newaxis]    
         
         # now read the tissue position file. It has the format:     
         df = pd.read_csv(args.tissue_position_file, sep=",", header=None)   
@@ -145,8 +162,7 @@ if __name__ == "__main__":
         barcode_vs_xy = dict() # record the x and y coordinates for each spot/cell
         for i in range (0, tissue_position.shape[0]):
             barcode_vs_xy[tissue_position[i][0]] = [tissue_position[i][4], tissue_position[i][5]] # x and y coordinates
-            #barcode_vs_xy[tissue_position[i][0]] = [tissue_position[i][5], tissue_position[i][4]] #for some weird reason, in the .h5 format for LUAD sample, the x and y are swapped
-        
+            
         coordinates = np.zeros((cell_barcode.shape[0], 2)) # insert the coordinates in the order of cell_barcodes
         for i in range (0, cell_barcode.shape[0]):
             coordinates[i,0] = barcode_vs_xy[cell_barcode[i]][0]
@@ -245,7 +261,6 @@ if __name__ == "__main__":
             if distance_matrix[i,j] > args.neighborhood_threshold: #i not in k_higher:
                 dist_X[i,j] = 0 # no ccc happening outside threshold distance
     """      
-    #cell_rec_count = np.zeros((cell_vs_gene.shape[0]))
 
 
     #### automatically set the args.juxtacrine_distance ############
@@ -350,16 +365,6 @@ if __name__ == "__main__":
     ##############################################################################
     # some preprocessing before making the input graph
     count_total_edges = 0
-    """
-    cells_ligand_vs_receptor = []
-    for i in range (0, cell_vs_gene.shape[0]):
-        cells_ligand_vs_receptor.append([])
-        
-    for i in range (0, cell_vs_gene.shape[0]):
-        for j in range (0, cell_vs_gene.shape[0]):
-            cells_ligand_vs_receptor[i].append([])
-            cells_ligand_vs_receptor[i][j] = []
-    """
     cells_ligand_vs_receptor = defaultdict(dict)
 
     ligand_list =  list(ligand_dict_dataset.keys())            
