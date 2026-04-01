@@ -15,7 +15,7 @@ from scipy.sparse import csr_matrix
 
 
 
-def get_split_graph(training_data, node_id_sorted, total_subgraphs, expression_matrix_path=''): # use this if you don't want to save the split graph into disk due to space issue
+def get_split_graph(training_data, node_id_sorted, total_subgraphs, expression_matrix_path='', node_feature_path=''): # use this if you don't want to save the split graph into disk due to space issue
     
     fp = gzip.open(training_data, 'rb')  
     row_col, edge_weight, lig_rec, total_num_cell = pickle.load(fp)
@@ -52,7 +52,15 @@ def get_split_graph(training_data, node_id_sorted, total_subgraphs, expression_m
     '''
     ##################################################################################################################
 
-    if expression_matrix_path == '':
+    if expression_matrix_path != '':
+        f = gzip.open(expression_matrix_path, 'rb')
+        X = pickle.load(f)
+        num_feature = X.shape[1]
+    elif node_feature_path != '':
+        f = gzip.open(node_feature_path, 'rb')
+        X = pickle.load(f)
+        num_feature = X.shape[1]    
+    else:
         # one hot vector used as node feature vector
         #X = np.eye(datapoint_size, datapoint_size)
         #np.random.shuffle(X)
@@ -60,10 +68,6 @@ def get_split_graph(training_data, node_id_sorted, total_subgraphs, expression_m
         np.random.shuffle(X)
         num_feature = datapoint_size
 
-    else:
-        f = gzip.open(expression_matrix_path, 'rb')
-        X = pickle.load(f)
-        num_feature = X.shape[1]
     
     # split it into N set of edges
     
@@ -139,12 +143,18 @@ def get_split_graph(training_data, node_id_sorted, total_subgraphs, expression_m
         
         # create new X matrix
         num_cell = new_id
-        X_data = np.zeros((num_cell, datapoint_size))
+        X_data = np.zeros((num_cell, num_feature))
         spot_id = 0
         for spot in spot_list:
             #X_data[spot_id] = X[spot,:]
-            one_column_position = X[spot]
-            X_data[spot_id, one_column_position] = 1
+            # if node feature matrix is used or normalized expression matrix
+            if expression_matrix_path != '' or node_feature_path != '':
+                X_data[spot_id][:] = X[spot][:]
+            else:
+                # if unique id for each node
+                one_column_position = X[spot]
+                X_data[spot_id, one_column_position] = 1
+                
             spot_id = spot_id + 1    
         
 
@@ -183,10 +193,6 @@ def get_graph(training_data): # use this if you already have saved the split gra
      
     f = gzip.open(training_data , 'rb')
     graph_bag, num_feature = pickle.load(f)
-    
-    ###########
-    # split it into N set of edges
-    ###########
 
     return graph_bag, num_feature #graph_bags
 
@@ -296,6 +302,7 @@ def train_CellNEST(args, graph_bag, in_channels):
         DGI_load_path = args.model_path+'DGI_'+ args.load_model_name+'.pth.tar'
         DGI_model.load_state_dict(torch.load(DGI_load_path))
         DGI_optimizer.load_state_dict(torch.load(args.model_path+'DGI_optimizer_'+ args.load_model_name  +'.pth.tar'))
+
 
     import datetime
     start_time = datetime.datetime.now()

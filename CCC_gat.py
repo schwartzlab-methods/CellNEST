@@ -13,7 +13,7 @@ import gzip
 
 from GATv2Conv_CellNEST import GATv2Conv
 
-def get_graph(training_data, expression_matrix_path=''):
+def get_graph(training_data, expression_matrix_path='', node_feature_path=''):
     """Add Statement of Purpose
     Args:
         training_data: Path to the input graph    
@@ -27,14 +27,16 @@ def get_graph(training_data, expression_matrix_path=''):
 
     datapoint_size = num_cell
     #print(edge_weight)
-    if expression_matrix_path == '':
+    if expression_matrix_path != '':
+        f = gzip.open(expression_matrix_path, 'rb')
+        X = pickle.load(f)
+    elif node_feature_path != '':
+        f = gzip.open(node_feature_path, 'rb')
+        X = pickle.load(f)
+    else:
         # one hot vector used as node feature vector
         X = np.eye(datapoint_size, datapoint_size)
         np.random.shuffle(X)
-
-    else:
-        f = gzip.open(expression_matrix_path, 'rb')
-        X = pickle.load(f)
 
     X_data = X # node feature vector
     num_feature = X_data.shape[1]

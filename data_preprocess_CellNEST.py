@@ -40,13 +40,17 @@ if __name__ == "__main__":
     parser.add_argument( '--neighborhood_threshold', type=float, default=0 , help='Set neighborhood threshold distance in terms of same unit as the coordinates') 
     parser.add_argument( '--block_autocrine', type=int, default=0 , help='Set to 1 if you want to ignore autocrine signals.') 
     parser.add_argument( '--block_juxtacrine', type=int, default=0, help='Set to 1 if you want to ignore juxtacrine signals.')     
-    parser.add_argument( '--database_path', type=str, default='database/CellNEST_database.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database.') 
+    parser.add_argument( '--database_path', type=str, default='database/CellNEST_database.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database. It should have Ligand and Receptor columns') 
     parser.add_argument( '--set_ROI', type=int, default=0, help='Set to 1 if you want to use ROI')
     parser.add_argument( '--x_min', type=int, default=-1, help='Set if you want to use ROI')
     parser.add_argument( '--x_max', type=int, default=-1, help='Set if you want to use ROI')
     parser.add_argument( '--y_min', type=int, default=-1, help='Set if you want to use ROI')
     parser.add_argument( '--y_max', type=int, default=-1, help='Set if you want to use ROI')
     parser.add_argument( '--skip_normalize', type=int, default=0, help='Set to 1 if you have QC data, so want to skip normalization')
+    parser.add_argument( '--use_celltype', type=int, default=0, help='Set to 1 to use cell types as node features. Provide the --celltype_path as well.')
+    parser.add_argument( '--celltype_path', type=str, default='database/celltype_annotation.csv', 
+                        help='If you want to use cell types as node features then provide the annotation (type/state/etc.) csv file path. ' \
+                        'It should have two columns: Barcode and Type.')
     args = parser.parse_args()
     
     if args.data_to == 'input_graph/':
@@ -462,6 +466,34 @@ if __name__ == "__main__":
     # we do not need this to use anywhere. But just for debug purpose we are saving this. We can skip this if we have space issue.
     with gzip.open(args.data_to + args.data_name + '_cell_vs_gene_quantile_transformed', 'wb') as fp:  
     	pickle.dump(cell_vs_gene, fp)
-        
+
+    # read cell type annotation and generate node feature vector using that
+    if args.use_celltype == 1 and args.celltype_path != '':
+        cell_annotation = pd.read_csv(args.celltype_path, sep=",")
+
+        # keep only those whose barcodes are saved: cell_barcode
+        cell_vs_annotation = dict()
+        for i in range(0, len(cell_annotation)):
+            cell_vs_annotation[cell_annotation['Barcode'][i]] = cell_annotation['Type'][i]
+
+        unique_annots = np.unique(list(cell_annotation['Type']))
+        unique_annots_count = len(unique_annots)
+        print('unique type found %d'%unique_annots_count)
+        type_vs_id = dict()
+        for i in range(0, len(unique_annots)):
+            type_vs_id[unique_annots[i]] = i
+
+        # one-hot vector node features
+        node_features = np.zeros((len(cell_barcode), unique_annots_count))
+        for i in range(0, len(cell_barcode)):
+            node_features[i][type_vs_id[cell_vs_annotation[cell_barcode[i]]]] = 1
+
+        with gzip.open(args.data_to + args.data_name + '_cell_vs_feature', 'wb') as fp:  
+            pickle.dump(node_features, fp)
+
+
+
+
+
     print('write data done')
     

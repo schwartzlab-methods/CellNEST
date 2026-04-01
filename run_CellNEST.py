@@ -36,6 +36,9 @@ if __name__ == "__main__":
     #parser.add_argument( '--split', type=int, default=0)
     parser.add_argument( '--total_subgraphs', type=int, default=1)
     parser.add_argument( '--metadata_to', type=str, default='metadata/', help='Path to save the metadata')
+    #=========================== experimental purpose =========================
+    parser.add_argument( '--expression_matrix_path', type=str, default='', help='Path to expression matrix [cell x gene] if you want to use gene expression as node feature.')
+    parser.add_argument( '--node_feature_path', type=str, default='', help='Path to node feature matrix [cell x feature_dimension] if you want to pre-generated features as node feature.')
     #=========================== optional ======================================
     parser.add_argument( '--load', type=int, default=0, help='Load a previously saved model state')  
     parser.add_argument( '--load_model_name', type=str, default='None' , help='Provide the model name that you want to reload')
@@ -87,7 +90,7 @@ if __name__ == "__main__":
     if args.total_subgraphs == 1:
         from CCC_gat import get_graph, train_CellNEST
         # data preparation
-        data_loader, num_feature = get_graph(args.training_data)    
+        data_loader, num_feature = get_graph(args.training_data, args.expression_matrix_path, args.node_feature_path)    
         # train the model
         DGI_model = train_CellNEST(args, data_loader=data_loader, in_channels=num_feature)
         # training done
@@ -95,7 +98,7 @@ if __name__ == "__main__":
         from CCC_gat_split import get_split_graph, train_CellNEST #_v2
         # data preparation
         # graph_bag, num_feature = get_graph(args.training_data)
-        graph_bag, num_feature = get_split_graph(args.training_data, node_id_sorted, args.total_subgraphs)    
+        graph_bag, num_feature = get_split_graph(args.training_data, node_id_sorted, args.total_subgraphs, args.expression_matrix_path, args.node_feature_path)    
         # train the model
         DGI_model = train_CellNEST(args, graph_bag=graph_bag, in_channels=num_feature)
         # training done
