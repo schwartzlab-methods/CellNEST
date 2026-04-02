@@ -84,18 +84,20 @@ This step generates the following six files under the directory 'output/V1_Human
 5. CellNEST_V1_Human_Lymph_Node_spatial_mygraph.html (in NetworkX)
 6. CellNEST_V1_Human_Lymph_Node_spatial_test_interactive.dot
 
+The screenshots of the component plot and histograms are provided below (you can find the original files inside the vignette directory). 
+![png file of the generated altair plot for top 40000 CCC](../images/altair_plot_human_lymph_top40000.png)
+![screenshot of the generated histogram plot for top 40000 CCC](../images/histogram_human_lymph_top40000.png)
+
+Please note that component 1 is dedicated to only those spots that are singleton, i.e., they only have self-loops but do not communicate with neighboring spots. In the plot above, we do not see component 1 because all the spots are talking to neighbors or are inactive (black), but there is no singleton.  
+
+### Converting the *.dot files to PDF or SVG for better sharing:
+
 Although the NetworkX plot shows the appealing view of CCC, it can be very big and memory-consuming to open in the web-browser and inconvenient to share. Therefore we prefer to convert the corresponding *.dot file to a *.pdf and *.svg file by executing the following command (takes input the path of *.dot file as an argument): 
 
 ```
 cellnest output_graph_picture output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_test_interactive.dot
 ```
 It will generate two files: edge_graph.svg and edge_graph.pdf in the current working directory, which are easy to view and share. 
- 
-The screenshots of the component plot and histograms are provided below (you can find the original files inside the vignette directory). 
-![png file of the generated altair plot for top 40000 CCC](../images/altair_plot_human_lymph_top40000.png)
-![screenshot of the generated histogram plot for top 40000 CCC](../images/histogram_human_lymph_top40000.png)
-
-Please note that component 1 is dedicated to only those spots that are singleton, i.e., they only have self-loops but do not communicate with neighboring spots. In the plot above, we do not see component 1 because all the spots are talking to neighbors or are inactive (black), but there is no singleton.  
 
 ### Seeing comparatively stronger CCC by changing --top_edge_count parameter from high to low
 
@@ -134,6 +136,11 @@ cellnest output_graph_picture output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Hum
 It will generate two files: edge_graph.svg and edge_graph.pdf. The edge_graph.pdf is provided below:
 
 ![pdf file of the generated altair plot for top 3000 CCC](../images/edge_graph.pdf)
+
+
+[Additional ad-hoc analysis](https://github.com/schwartzlab-methods/CellNEST/blob/main/vignette/workflow.md#instruction-to-run-additional-ad-hoc-analysis)
+
+
 
 ## Instruction to run additional ad hoc analysis:
 

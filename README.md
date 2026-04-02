@@ -24,72 +24,38 @@ sudo bash setup.sh
 ````
 This is to be executed once only when CellNEST is run for the first time. This setup makes the bash script 'cellnest' executable and copies it to your '$HOME/.local/bin/' so that your system can recognize 'cellnest' command. However, if you are running the model in a remote server where you don't have permission to make such changes, you can skip this step and let the 'cellnest' command be preceded by the 'bash' command for all the instructions provided below. 
 
+
+**NOTE**: 
+1. We have provided a default ligand-receptor database by merging the records from CellChat and NicheNet database. This is kept under 'database/' directory and will be used by CellNEST unless some other database is referred by the user. Note that, this includes the computationally predicted ones (by NicheNet) as well. If you want to use only manually curated ligand-receptor pairs, please set: --database_path='database/CellNEST_database_no_predictedPPI.csv'. 
+
+2. CellNEST needs raw gene count data as input. However, CellNEST pipeline does not perform any QC for cell filtering. So please run the QC pipeline beforehand if it deems necessary. But do not normalize or log tranform the gene count matrix as CellNEST has its own pipeline for doing that. However, if you only have already normalized/transformed data, and don't have access to raw counts for gene expression matrix, then you must use --skip_normalize=1 to avoid default Quantile transformation. Otherwise CellNEST may provide erroneous results.
+
+4. If you are working with single-cell resolution data, use additional parameter --distance_measure='knn' [[here](vignette/split_graph_option.md)]. To ignore autocrine signals, you may set --block_autocrine=1.   
+
+
 ## Instruction to run CellNEST:
 
-CellNEST needs raw gene count data as input. However, CellNEST pipeline does not perform any QC for cell filtering. So please run the QC pipeline beforehand if it deems necessary. But do not normalize or log tranform the gene count matrix as CellNEST has its own pipeline for doing that. 
-
-We use publicly available Visium sample on human lymph node (https://www.10xgenomics.com/datasets/human-lymph-node-1-standard-1-1-0) for the demonstration purpose. Please download the following two files:
+We use publicly available Visium sample on human lymph node (https://www.10xgenomics.com/datasets/human-lymph-node-1-standard-1-1-0) for most of the demonstration purpose. Please download the following two files:
 
 a. The filtered feature matrix from here: https://cf.10xgenomics.com/samples/spatial-exp/1.1.0/V1_Human_Lymph_Node/V1_Human_Lymph_Node_filtered_feature_bc_matrix.h5
 
 b. The spatial imaging data from here: https://cf.10xgenomics.com/samples/spatial-exp/1.1.0/V1_Human_Lymph_Node/V1_Human_Lymph_Node_spatial.tar.gz (please unzip the spatial imaging data)
 
-Both should be kept under the same directory, e.g., data/V1_Human_Lymph_Node_spatial/ directory. We have provided a default ligand-receptor database by merging the records from CellChat and NicheNet database. This is kept under 'database/' directory and will be used by CellNEST unless some other database is referred by the user.  
-
-**NOTE**: By default, CellNEST uses a database that combines multiple sources, including the computationally predicted ones. If you want to use only manually curated ligand-receptor pairs, please set: --database_path='database/CellNEST_database_no_predictedPPI.csv'. Also, if you are working with single-cell resolution data, use additional parameter --distance_measure='knn' [[here](vignette/split_graph_option.md)]. To ignore autocrine signals, you may set --block_autocrine=1.   
-
-Change your current working directory to the downloaded CellNEST repository. Then execute following commands to run CellNEST on the human lymph node sample. 
+Both should be kept under the same directory, e.g., data/V1_Human_Lymph_Node_spatial/ directory. Change your current working directory to the downloaded CellNEST repository. Then execute following vignettes. 
  
-   
-1. CellNEST takes two main inputs: spatial transcriptomics dataset and a ligand-receptor database. Assuming that the spatial dataset is in "data/V1_Human_Lymph_Node_spatial/" directory and the ligand-receptor database is in 'database/CellNEST_database.csv', data preprocessing for input graph generation can be done as follows:
-````
-cellnest preprocess --data_name='V1_Human_Lymph_Node_spatial' --data_from='data/V1_Human_Lymph_Node_spatial/' --data_type=visium
-````
-It will create two folders in the current working directories: "input_graph/V1_Human_Lymph_Node_spatial/" and "metadata/V1_Human_Lymph_Node_spatial/" to save the preprocessed input data. Additionally, if you want to integrate intracellular pathway with ligand-receptor coexpression, please use following command with additional parameter: --add_intra=1
-```
-cellnest preprocess_intra --data_name='V1_Human_Lymph_Node_spatial' --data_from='data/V1_Human_Lymph_Node_spatial/' --add_intra=1 --data_type=visium
-```
+## Vignette
 
+1. [Main workflow: Generate active CCC lists given a spatial transcriptomics data](vignette/workflow.md)
+2. [Downstream analysis to filter CCC list for specific region / cell type / specific ligand-receptor pair](vignette/filter_ccc_list_for_type_region.md)
+3. [Running the CellNEST model through singularity image](vignette/running_CellNEST_singularity_container.md)
+4. [Running CellNEST with "split" option in case of very high number of cells (single-cell resolution, Visium HD, Xenium, MERFISH, etc.) or low GPU memory issue](vignette/split_graph_option.md)
+5. [CellNEST on deconvoluted Spatial Transcriptomics data](vignette/deconvolute_ST.md) 
+6. [CellNEST on MERFISH data after gene imputation using scRNA-seq data](vignette/integrate_scRNAseq_merfish.md)
+7. [Convert ST data in any format to anndata for easy manipulation by CellNEST](vignette/convert_to_anndata.md)
+
+   
 Please use the argument --help to see all available input parameters.  
 
-2. To train a CellNEST model on the preprocessed 'V1_Human_Lymph_Node_spatial' data use following command with preferred model name. If the same experiment if repeated multiple times for model ensemble, each time a different run_id should be used and the run_id is expected to be consecutive. For example, if it is run five times then the run_id for the five runs should be 1, 2, 3, 4, and 5 respectively. By default the model will be trained for 80,000 epochs. Please use the argument --help to see all available input parameters. Please note that, the script will use GPU if avaiable, otherwise it will use CPU. Since this is a time consuming step, we suggest to run this step in the background and print the outputs in a separate log file as follows:
-
-````
-nohup cellnest run --data_name='V1_Human_Lymph_Node_spatial' --num_epoch 80000 --model_name='CellNEST_V1_Human_Lymph_Node_spatial' --run_id=1 > output_human_lymph_node_run1.log &
-nohup cellnest run  --data_name='V1_Human_Lymph_Node_spatial' --num_epoch 80000 --model_name='CellNEST_V1_Human_Lymph_Node_spatial' --run_id=2 > output_human_lymph_node_run2.log &
-nohup cellnest run  --data_name='V1_Human_Lymph_Node_spatial' --num_epoch 80000 --model_name='CellNEST_V1_Human_Lymph_Node_spatial' --run_id=3 > output_human_lymph_node_run3.log &
-nohup cellnest run  --data_name='V1_Human_Lymph_Node_spatial' --num_epoch 80000 --model_name='CellNEST_V1_Human_Lymph_Node_spatial' --run_id=4 > output_human_lymph_node_run4.log &
-nohup cellnest run  --data_name='V1_Human_Lymph_Node_spatial' --num_epoch 80000 --model_name='CellNEST_V1_Human_Lymph_Node_spatial' --run_id=5 > output_human_lymph_node_run5.log &
-````
-
-  It will save trained model state with minimum loss in 'model/V1_Human_Lymph_Node_spatial/' and the corresponding attention scores and node embedding in 'embedding_data/V1_Human_Lymph_Node_spatial/'. Note: To have reproducible results, please use --manual_seed='yes' and --seed=1 (your chosen seed).   
-
-3. To postprocess the model output, i.e., ensemble of multiple runs (through rank of product) and producing list of top 20% highly ranked communications we have to run following commands:
-
-````
-cellnest postprocess --data_name='V1_Human_Lymph_Node_spatial' --model_name='CellNEST_V1_Human_Lymph_Node_spatial' --total_runs=5 
-````
-
-  In the command, we use --total_runs=5 assuming that the model is run five times. The top 20% highly ranked communications are saved in a file named as 'V1_Human_Lymph_Node_spatial_top20percent.csv' in "output/V1_Human_Lymph_Node_spatial/".  
-
-4. To visualize the output graph, i.e., finding connected components and ploting them, we run following command:
-
-````
-cellnest visualize --data_name='V1_Human_Lymph_Node_spatial' --model_name='CellNEST_V1_Human_Lymph_Node_spatial'
-````
-
-This step generates [six files](https://github.com/schwartzlab-methods/CellNEST/blob/main/vignette/user_guide.md#output) under the directory 'output/V1_Human_Lymph_Node_spatial/' inlcluding a NetworkX plot for visualizing the CCC. 
- 
-### Converting the *.dot files to PDF or SVG for better sharing:
-
-Although the NetworkX plot shows the appealing view of CCC, it can be very big and memory-consuming to open in the web-browser and inconvenient to share. Therefore we prefer to convert the corresponding *.dot file to a *.pdf and *.svg file by executing the following command (takes input the path of *.dot file as an argument): 
-
-```
-cellnest output_graph_picture output/V1_Human_Lymph_Node_spatial/CellNEST_V1_Human_Lymph_Node_spatial_test_interactive.dot
-```
-It will generate two files: edge_graph.svg and edge_graph.pdf in the current working directory, which are easy to view and share. 
-
-[Additional ad-hoc analysis](https://github.com/schwartzlab-methods/CellNEST/blob/main/vignette/workflow.md#instruction-to-run-additional-ad-hoc-analysis)
 
 ### CellNEST Interactive
 Finally, you can interactively visualize the cell-cell communication on tissue surface by using CellNEST Interactive: a web-based data visualization tool. The detailed instructions for running the interactive tool are provided here: https://github.com/schwartzlab-methods/cellnest-interactive
@@ -129,16 +95,5 @@ cellnest interactive cellnest-interactive-main/ 8080 cellnest-interactive-main/s
 3. Lung Cancer Adenocarcinoma (LUAD): The Gene Expression Omnibus under accession number GSE189487.
 4. Pancreatic Ductal Adenocarcinoma (PDAC): The Gene Expression Omnibus accession number is to be provided before publication.
 
-## Vignette
-For a detailed explanation of the available parameters and their usage, please see the vignettes:
 
-1. [Main workflow: Generate active CCC lists given a spatial transcriptomics data](vignette/workflow.md)
-2. [Downstream analysis to filter CCC list for specific region / cell type / specific ligand-receptor pair](vignette/filter_ccc_list_for_type_region.md)
-3. [Running the CellNEST model through singularity image](vignette/running_CellNEST_singularity_container.md)
-4. [Running CellNEST with "split" option in case of very high number of cells (single-cell resolution, Visium HD, Xenium, MERFISH, etc.) or low GPU memory issue](vignette/split_graph_option.md)
-5. [CellNEST on deconvoluted Spatial Transcriptomics data](vignette/deconvolute_ST.md) 
-6. [CellNEST on MERFISH data after gene imputation using scRNA-seq data](vignette/integrate_scRNAseq_merfish.md)
-7. [Convert ST data in any format to anndata for easy manipulation by CellNEST](vignette/convert_to_anndata.md)
-
-   
     
