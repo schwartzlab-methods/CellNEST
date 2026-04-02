@@ -82,6 +82,7 @@ if __name__ == "__main__":
     parser.add_argument( '--no_ccc_color', type=str, default='#000000', help='Set the HEX code for background')    
     parser.add_argument( '--attention_cutoff', type=float, default=-1, help='Set attention cutoff')    
     parser.add_argument( '--annotation_group', type=str, default="", help='Set group of annotation to filter by inserting &')
+    parser.add_argument( '--show_attention_score', type=int, default=0, help='Set to 1 if you want to see this in the component plot')
     
     args = parser.parse_args()
 
@@ -372,34 +373,69 @@ if __name__ == "__main__":
 
     # converting to pandas dataframe
     if args.spread_time == 1.0:
-        data_list_pd = pd.DataFrame(data_list)
-        id_label = len(list(set(data_list['component_label']))) # unique_component_count
-        set1 = altairThemes.get_colour_scheme("Set1", id_label)
-        set1[0] = args.no_ccc_color
-        chart = alt.Chart(data_list_pd).mark_point(filled=True, opacity = 1, size = args.point_size).encode(
-            alt.X('X', scale=alt.Scale(zero=False)),
-            alt.Y('Y', scale=alt.Scale(zero=False)),
-            shape = alt.Shape('pathology_label:N'), #shape = "pathology_label",
-            color=alt.Color('component_label:N', scale=alt.Scale(range=set1)),
-            #opacity=alt.Opacity('opacity:N'), #"opacity", 
-            tooltip=['component_label'] #,'opacity'
-        )
+        if args.show_attention_score == 1:
+            data_list_pd = pd.DataFrame(data_list)
+            id_label = len(list(set(data_list['component_label']))) # unique_component_count
+            set1 = altairThemes.get_colour_scheme("Set1", id_label)
+            set1[0] = args.no_ccc_color
+            chart = alt.Chart(data_list_pd).mark_point(filled=True, opacity = 1, size = args.point_size).encode(
+                alt.X('X', scale=alt.Scale(zero=False)),
+                alt.Y('Y', scale=alt.Scale(zero=False)),
+                shape = alt.Shape('pathology_label:N'), #shape = "pathology_label",
+                color=alt.Color('component_label:N', scale=alt.Scale(range=set1)),
+                opacity=alt.Opacity('opacity'), #"opacity", :N
+                tooltip=['component_label'] #,'opacity'
+            )
+
+        else:
+            data_list_pd = pd.DataFrame(data_list)
+            id_label = len(list(set(data_list['component_label']))) # unique_component_count
+            set1 = altairThemes.get_colour_scheme("Set1", id_label)
+            set1[0] = args.no_ccc_color
+            chart = alt.Chart(data_list_pd).mark_point(filled=True, opacity = 1, size = args.point_size).encode(
+                alt.X('X', scale=alt.Scale(zero=False)),
+                alt.Y('Y', scale=alt.Scale(zero=False)),
+                shape = alt.Shape('pathology_label:N'), #shape = "pathology_label",
+                color=alt.Color('component_label:N', scale=alt.Scale(range=set1)),
+                opacity=alt.Opacity('opacity'), #"opacity", :N
+                tooltip=['component_label'] #,'opacity'
+            )
+        
     else:
-        data_list_pd = pd.DataFrame(data_list)
-        id_label = len(list(set(data_list['component_label']))) # unique_component_count
-        set1 = altairThemes.get_colour_scheme("Set1", id_label)
-        set1[0] = args.no_ccc_color
-        chart = alt.Chart(data_list_pd).mark_point(filled=True, opacity = 1, size = args.point_size).encode(
-            alt.X('X', scale=alt.Scale(zero=False)),
-            alt.Y('Y', scale=alt.Scale(zero=False)),
-            shape = alt.Shape('pathology_label:N'), #shape = "pathology_label",
-            color=alt.Color('component_label:N', scale=alt.Scale(range=set1)),
-            #opacity=alt.Opacity('opacity:N'), #"opacity", 
-            tooltip=['component_label'] #,'opacity'
-        ).properties(
-        width=args.spread_time,  # Increase the step value to increase spacing
-        height=args.spread_time
-        )
+        if args.show_attention_score == 1:
+            data_list_pd = pd.DataFrame(data_list)
+            id_label = len(list(set(data_list['component_label']))) # unique_component_count
+            set1 = altairThemes.get_colour_scheme("Set1", id_label)
+            set1[0] = args.no_ccc_color
+            chart = alt.Chart(data_list_pd).mark_point(filled=True, opacity = 1, size = args.point_size).encode(
+                alt.X('X', scale=alt.Scale(zero=False)),
+                alt.Y('Y', scale=alt.Scale(zero=False)),
+                shape = alt.Shape('pathology_label:N'), #shape = "pathology_label",
+                color=alt.Color('component_label:N', scale=alt.Scale(range=set1)),
+                opacity=alt.Opacity('opacity'), #"opacity", :N
+                tooltip=['component_label'] #,'opacity'
+            ).properties(
+            width=args.spread_time,  # Increase the step value to increase spacing
+            height=args.spread_time
+            )
+
+        else:
+            data_list_pd = pd.DataFrame(data_list)
+            id_label = len(list(set(data_list['component_label']))) # unique_component_count
+            set1 = altairThemes.get_colour_scheme("Set1", id_label)
+            set1[0] = args.no_ccc_color
+            chart = alt.Chart(data_list_pd).mark_point(filled=True, opacity = 1, size = args.point_size).encode(
+                alt.X('X', scale=alt.Scale(zero=False)),
+                alt.Y('Y', scale=alt.Scale(zero=False)),
+                shape = alt.Shape('pathology_label:N'), #shape = "pathology_label",
+                color=alt.Color('component_label:N', scale=alt.Scale(range=set1)),
+                opacity=alt.Opacity('opacity'), #"opacity", :N
+                tooltip=['component_label'] #,'opacity'
+            ).properties(
+            width=args.spread_time,  # Increase the step value to increase spacing
+            height=args.spread_time
+            )
+
 
     chart.save(output_name +'_component_plot_'+str(args.top_edge_count) +'.html')
     print('Altair plot generation done: '+output_name +'_component_plot_'+str(args.top_edge_count) +'.html')
