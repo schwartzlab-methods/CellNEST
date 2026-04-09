@@ -57,6 +57,31 @@ def plot(df):
 
   return p
 
+def plot_percentage(df):
+    set1 = altairThemes.get_colour_scheme("Set1", len(df["component"].unique()))
+    set1[0] = args.no_ccc_color
+
+    df_counts = (
+        df.groupby(['ligand-receptor', 'component'])
+        .size()
+        .reset_index(name='count')
+    )
+
+    # divide by TOTAL (not per group)
+    total = df_counts['count'].sum()
+    df['Percentage'] = (df_counts['count'] / total)*100
+
+    base = alt.Chart(df).mark_bar().encode(
+                x=alt.X("ligand-receptor:N", axis=alt.Axis(labelAngle=45), sort='-y'),
+                y=alt.Y("Percentage:Q", title="Percentage"), # percentage
+                color=alt.Color("component:N", scale = alt.Scale(range=set1)),
+                order=alt.Order("component:N", sort="ascending"),
+                tooltip=["component"]
+            )
+    p = base
+
+    return p
+
 ####################### Set the name of the sample you want to visualize ###################################
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -83,7 +108,8 @@ if __name__ == "__main__":
     parser.add_argument( '--attention_cutoff', type=float, default=-1, help='Set attention cutoff')    
     parser.add_argument( '--annotation_group', type=str, default="", help='Set group of annotation to filter by inserting &')
     parser.add_argument( '--show_attention_score', type=int, default=0, help='Set to 1 if you want to see this in the component plot')
-    
+    parser.add_argument( '--keep_geneset', type=str, help='Keep only LRs that has gene (as a ligand and/or receptor) from this list')
+    parser.add_argument( '--remove_genes', type=str, help='Remove LR having these genes from the lr pair list')
     args = parser.parse_args()
 
     temp_file_name = args.data_name + '-' + str(args.top_edge_count)
@@ -154,6 +180,31 @@ if __name__ == "__main__":
 
     #exit(0)
     csv_record = df.values.tolist() # barcode_info[i][0], barcode_info[j][0], ligand, receptor, edge_rank, label, i, j, score
+    if args.keep_geneset!='':
+        keep_geneset = args.keep_geneset.split(',')
+        keep_geneset = list(set(keep_geneset))
+        keep_geneset = {gene: 1 for gene in keep_geneset}
+        csv_record_temp = []
+        for item in csv_record:
+            ligand = item[2]
+            receptor = item[3]
+            if ligand in keep_geneset or receptor in keep_geneset:
+                csv_record_temp.append(item)
+
+        csv_record = csv_record_temp
+
+    if args.remove_genes!='':
+        remove_genes = args.remove_genes.split(',')
+        remove_genes = list(set(remove_genes))
+        remove_genes = {gene: 1 for gene in remove_genes}
+        csv_record_temp = []
+        for item in csv_record:
+            ligand = item[2]
+            receptor = item[3]
+            if ligand not in remove_genes and receptor not in remove_genes:
+                csv_record_temp.append(item)
+
+        csv_record = csv_record_temp
 
     ## sort the edges based on their rank (column 4), low to high, low being higher attention score
     csv_record = sorted(csv_record, key = lambda x: x[4])
@@ -452,7 +503,12 @@ if __name__ == "__main__":
     p = plot(df)
     outPath = output_name +'_histogram_byFrequency_plot_top'+str(args.top_edge_count) +'.html'
     p.save(outPath)	
-    print('Histogram plot generation done: '+ outPath)
+    print('Histogram plot (count) generation done: '+ outPath)
+    
+    p = plot_percentage(df)
+    outPath = output_name +'_histogram_byFrequency_plot_abundance_top'+str(args.top_edge_count) +'.html'
+    p.save(outPath)	
+    print('Histogram plot (percentage) generation done: '+ outPath)
     
     ################################# Save the histograms in a table format ########################################
 
@@ -480,7 +536,12 @@ if __name__ == "__main__":
         'Ligand-Receptor Pairs': data_list['X'],
         'Total Count': data_list['Y']
     })
-  
+
+    data_list_pd['Percentage'] = (data_list_pd['Total Count'] / data_list_pd['Total Count'].sum()) * 100
+    data_list_pd['Percentage'] = data_list_pd['Percentage'].round(2)
+
+
+
     data_list_pd.to_csv(output_name +'_histogram_byFrequency_table_top'+str(args.top_edge_count) +'.csv', index=False)
     print(output_name +'_histogram_byFrequency_table_top'+str(args.top_edge_count) +'.csv')    
 
@@ -512,7 +573,11 @@ if __name__ == "__main__":
         )
     
         chart.save(output_name +'_histogram_byAttention_plot.html')
-        print('Saved at '+ output_name + '_histogram_byAttention_plot.html')    
+        print('Saved at '+ output_name + '_histogram_byAttention_plot.html')  
+
+        data_list_pd.to_csv(output_name +'_histogram_byAttention_table_top'+str(args.top_edge_count) +'.csv', index=False)
+        print('Saved at '+ output_name +'_histogram_byAttention_table_top'+str(args.top_edge_count) +'.csv')  
+
     ############################  Network/edge graph plot ######################
 
     set1 = altairThemes.get_colour_scheme("Set1", unique_component_count)
