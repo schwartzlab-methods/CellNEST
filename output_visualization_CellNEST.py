@@ -31,7 +31,6 @@ alt.themes.register("publishTheme", altairThemes.publishTheme)
 alt.themes.enable("publishTheme")
 
 
-#current_directory = ??
 
 ##########################################################
 # preprocessDf, plot: these two functions are written by GW 
@@ -108,8 +107,14 @@ if __name__ == "__main__":
     parser.add_argument( '--attention_cutoff', type=float, default=-1, help='Set attention cutoff')    
     parser.add_argument( '--annotation_group', type=str, default="", help='Set group of annotation to filter by inserting &')
     parser.add_argument( '--show_attention_score', type=int, default=0, help='Set to 1 if you want to see this in the component plot')
-    parser.add_argument( '--keep_geneset', type=str, help='Keep only LRs that has gene (as a ligand and/or receptor) from this list')
-    parser.add_argument( '--remove_genes', type=str, help='Remove LR having these genes from the lr pair list')
+    parser.add_argument( '--keep_geneset', type=str, default="", help='Keep only LRs that has gene (as a ligand and/or receptor) from this list')
+    parser.add_argument( '--keep_geneset_file', type=str, default="", help='Set to the CSV file having target LR pairs under column geneset (and label as optional column)')
+    parser.add_argument( '--remove_genes', type=str, default="", help='Remove LR having these genes from the lr pair list. ' \
+                        'This helps if there is one/few highly dominating pair (but not novel) that bias the analysis.')
+    
+    parser.add_argument( '--suffix', type=str, default="", help='Add additional suffix.')
+
+    
     args = parser.parse_args()
 
     temp_file_name = args.data_name + '-' + str(args.top_edge_count)
@@ -180,6 +185,19 @@ if __name__ == "__main__":
 
     #exit(0)
     csv_record = df.values.tolist() # barcode_info[i][0], barcode_info[j][0], ligand, receptor, edge_rank, label, i, j, score
+
+    if args.keep_geneset_file != "":
+        keep_geneset_df = pd.read_csv(args.keep_geneset_file)
+        args.keep_geneset = ""
+        for i in range (0, len(keep_geneset_df)):
+            marker_gene = keep_geneset_df['geneset'][i]
+            args.keep_geneset = args.keep_geneset + marker_gene
+            if i + 1 == len(keep_geneset_df): # break the loop so that no 'comma' at end
+                break
+            else:
+                args.keep_geneset = args.keep_geneset + ','
+      
+
     if args.keep_geneset!='':
         keep_geneset = args.keep_geneset.split(',')
         keep_geneset = list(set(keep_geneset))
@@ -192,6 +210,7 @@ if __name__ == "__main__":
                 csv_record_temp.append(item)
 
         csv_record = csv_record_temp
+
 
     if args.remove_genes!='':
         remove_genes = args.remove_genes.split(',')
@@ -339,7 +358,7 @@ if __name__ == "__main__":
 
     #################################### save it
     df = pd.DataFrame(csv_record_final[0:len(csv_record_final)])
-    df.to_csv(output_name + '_ccc_list_top'+ str(args.top_edge_count) +'.csv', index=False, header=False)
+    df.to_csv(output_name + '_ccc_list_top'+ str(args.top_edge_count) + args.suffix  +'.csv', index=False, header=False)
   
 
     #####################################
@@ -488,8 +507,8 @@ if __name__ == "__main__":
             )
 
 
-    chart.save(output_name +'_component_plot_'+str(args.top_edge_count) +'.html')
-    print('Altair plot generation done: '+output_name +'_component_plot_'+str(args.top_edge_count) +'.html')
+    chart.save(output_name +'_component_plot_'+str(args.top_edge_count) + args.suffix +'.html')
+    print('Altair plot generation done: '+output_name +'_component_plot_'+str(args.top_edge_count) + args.suffix +'.html')
 
     ###################################  Histogram plotting #################################################################################
 
@@ -501,12 +520,12 @@ if __name__ == "__main__":
     print('len of loaded csv for histogram generation is %d'%len(df))
     df = preprocessDf(df)
     p = plot(df)
-    outPath = output_name +'_histogram_byFrequency_plot_top'+str(args.top_edge_count) +'.html'
+    outPath = output_name +'_histogram_byFrequency_plot_top'+str(args.top_edge_count) + args.suffix  +'.html'
     p.save(outPath)	
     print('Histogram plot (count) generation done: '+ outPath)
     
     p = plot_percentage(df)
-    outPath = output_name +'_histogram_byFrequency_plot_abundance_top'+str(args.top_edge_count) +'.html'
+    outPath = output_name +'_histogram_byFrequency_plot_abundance_top'+str(args.top_edge_count)  + args.suffix +'.html'
     p.save(outPath)	
     print('Histogram plot (percentage) generation done: '+ outPath)
     
@@ -542,8 +561,8 @@ if __name__ == "__main__":
 
 
 
-    data_list_pd.to_csv(output_name +'_histogram_byFrequency_table_top'+str(args.top_edge_count) +'.csv', index=False)
-    print(output_name +'_histogram_byFrequency_table_top'+str(args.top_edge_count) +'.csv')    
+    data_list_pd.to_csv(output_name +'_histogram_byFrequency_table_top'+str(args.top_edge_count) + args.suffix +'.csv', index=False)
+    print(output_name +'_histogram_byFrequency_table_top'+str(args.top_edge_count) + args.suffix +'.csv')    
 
   
     ###############################################################################################################  
@@ -572,11 +591,11 @@ if __name__ == "__main__":
             y='Total Attention Score'
         )
     
-        chart.save(output_name +'_histogram_byAttention_plot.html')
-        print('Saved at '+ output_name + '_histogram_byAttention_plot.html')  
+        chart.save(output_name +'_histogram_byAttention_plot'+ args.suffix +'.html')
+        print('Saved at '+ output_name + '_histogram_byAttention_plot'+ args.suffix +'.html')  
 
-        data_list_pd.to_csv(output_name +'_histogram_byAttention_table_top'+str(args.top_edge_count) +'.csv', index=False)
-        print('Saved at '+ output_name +'_histogram_byAttention_table_top'+str(args.top_edge_count) +'.csv')  
+        data_list_pd.to_csv(output_name +'_histogram_byAttention_table_top'+str(args.top_edge_count) + args.suffix +'.csv', index=False)
+        print('Saved at '+ output_name +'_histogram_byAttention_table_top'+str(args.top_edge_count) + args.suffix +'.csv')  
 
     ############################  Network/edge graph plot ######################
 
@@ -638,10 +657,10 @@ if __name__ == "__main__":
 
     nt = Network( directed=True, height='1000px', width='100%') #"500px", "500px",, filter_menu=True     
     nt.from_nx(g)
-    nt.save_graph(output_name +'_mygraph_top'+ str(args.top_edge_count) +'.html')
-    print('Edge graph plot generation done: '+output_name +'_mygraph_top'+ str(args.top_edge_count) +'.html')
+    nt.save_graph(output_name +'_mygraph_top'+ str(args.top_edge_count) + args.suffix +'.html')
+    print('Edge graph plot generation done: '+output_name +'_mygraph_top'+ str(args.top_edge_count) + args.suffix +'.html')
     ########################################################################
     # convert it to dot file to be able to convert it to pdf or svg format for inserting into the paper
     write_dot(g, output_name + "_test_interactive_top"+ str(args.top_edge_count) +".dot")
-    print('dot file generation done: '+output_name + "_test_interactive_top"+ str(args.top_edge_count) +".dot")
+    print('dot file generation done: '+output_name + "_test_interactive_top"+ str(args.top_edge_count) + args.suffix  +".dot")
     print('All done')
