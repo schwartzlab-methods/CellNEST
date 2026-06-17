@@ -47,14 +47,14 @@ Both should be kept under the same directory, e.g., data/V1_Human_Lymph_Node_spa
  
 ## Vignette
 
-1. [Main workflow: Generate active CCC lists given a spatial transcriptomics data](vignette/workflow.md)
+1. [Main workflow: generate active CCC lists given a spatial transcriptomics data](vignette/workflow.md)
 2. [Downstream analysis to filter CCC list for specific region / cell type / specific ligand-receptor pair](vignette/filter_ccc_list_for_type_region.md)
 3. [Running the CellNEST model through singularity image](vignette/running_CellNEST_singularity_container.md)
 4. [Running CellNEST with "split" option in case of very high number of cells (single-cell resolution, Visium HD, Xenium, MERFISH, etc.) or low GPU memory issue](vignette/split_graph_option.md)
 5. [CellNEST on deconvoluted Spatial Transcriptomics data](vignette/deconvolute_ST.md) 
 6. [CellNEST on MERFISH data after gene imputation using scRNA-seq data](vignette/integrate_scRNAseq_merfish.md)
 7. [Convert ST data in any format to anndata for easy manipulation by CellNEST](vignette/convert_to_anndata.md)
-
+8. [Relay network confidence scoring](vignette/relay_confidence.md)
    
 Please use the argument --help to see all available input parameters.  
 
