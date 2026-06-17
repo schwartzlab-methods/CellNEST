@@ -1,6 +1,7 @@
 # Written By 
 # Fatema Tuz Zohora
-
+# Enhanced By 
+# Deisha, Richard
 
 print('package loading')
 import numpy as np
@@ -84,7 +85,7 @@ def plot_percentage(df):
 ####################### Set the name of the sample you want to visualize ###################################
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
+    parser.add_argument( '--data_from', type=str, default='input_graph/', help='Path to grab the quantile-normalized gene expression data from.')
     parser.add_argument( '--data_name', type=str, help='The name of dataset', required=True) # 
     parser.add_argument( '--model_name', type=str, help='Name of the trained model', required=True)
     parser.add_argument( '--top_edge_count', type=int, default=1500 ,help='Number of the top communications to plot. To plot all insert -1') # 
@@ -121,6 +122,9 @@ if __name__ == "__main__":
 
     if args.metadata_from=='metadata/': # if default one is used, then concatenate the dataname. Otherwise, use the user provided path directly
         args.metadata_from = args.metadata_from + args.data_name + '/'
+
+    if args.data_from == 'input_graph/':
+        args.data_from = args.data_from + args.data_name + '/'
 
     if args.output_path=='output/': # if default one is used, then concatenate the dataname. Otherwise, use the user provided path directly
         args.output_path = args.output_path + args.data_name + '/'
@@ -659,6 +663,56 @@ if __name__ == "__main__":
     nt.from_nx(g)
     nt.save_graph(output_name +'_mygraph_top'+ str(args.top_edge_count) + args.suffix +'.html')
     print('Edge graph plot generation done: '+output_name +'_mygraph_top'+ str(args.top_edge_count) + args.suffix +'.html')
+    ########################################################################
+    # if visualization of a specific ligand-receptor pair is specified, produce two additional plots:
+    # _mygraph_{ligand}_ligandExpr_top{N}.html: sender spots coloured by quantile-normalized ligand expression
+    # _mygraph_{receptor}_receptorExpr_top{N}.html: receiver spots coloured by quantile-normalized receptor expression
+    # expression values are min-max scaled per gene across all spots for colour mapping (magma_r colourmap)
+    if args.filter_by_ligand_receptor != '':
+        ligand = args.filter_by_ligand_receptor.split('-')[0]
+        receptor = args.filter_by_ligand_receptor.split('-')[1]
+        # load quantile-normalized expression matrix (spots x genes)
+        with gzip.open(args.data_from + args.data_name + '_cell_vs_gene_quantile_transformed', 'rb') as fp:
+            cell_vs_gene_qt = pickle.load(fp)
+        # load gene ids corresponding to columns of cell_vs_gene_qt
+        gene_ids_qt = pd.read_csv(
+            args.metadata_from + 'gene_ids_' + args.data_name + '.csv', header=None
+        )[0].tolist()
+        # map gene name to column index in cell_vs_gene_qt
+        gene_index_qt = {g: i for i, g in enumerate(gene_ids_qt)}
+        # colour map: magma reversed (low expression: dark purple; high expression: yellow)
+        cmap = plt.get_cmap('magma_r')
+        # collect integer spot indices of senders (from_id) and receivers (to_id)
+        # for edges matching the specified ligand-receptor pair
+        sender_spots = set()
+        receiver_spots = set()
+        for k in range(1, len(csv_record_final) - 1):
+            if csv_record_final[k][2] == ligand and csv_record_final[k][3] == receptor:
+                sender_spots.add(csv_record_final[k][6])  
+                receiver_spots.add(csv_record_final[k][7])  
+        # graph 1: senders coloured by ligand expression 
+        # graph 2: receivers coloured by receptor expression 
+        for gene, role, spots in [(ligand, 'ligand', sender_spots), (receptor, 'receptor', receiver_spots)]:
+            if gene not in gene_index_qt:
+                print('Gene %s not found in quantile-transformed matrix; skipping %s expression graph.' % (gene, role))
+                continue
+            # extract expression vector for this gene across all spots
+            g_idx = gene_index_qt[gene]
+            expr_vals = cell_vs_gene_qt[:, g_idx]
+            # min-max scale to [0, 1] for colour mapping
+            vmin, vmax = expr_vals.min(), expr_vals.max()
+            # deep copy g so edges, non-participating node colours, and all
+            # other graph attributes are identical to the original mygraph output
+            g_expr = copy.deepcopy(g)
+            # update node colours only for spots participating in this role
+            for i in spots:
+                norm_val = (expr_vals[i] - vmin) / (vmax - vmin) if vmax > vmin else 0.0
+                g_expr.nodes[int(ids[i])]['color'] = rgb2hex(cmap(norm_val)[:3])
+            nt_expr = Network(directed=True, height='1000px', width='100%')
+            nt_expr.from_nx(g_expr)
+            out_expr = output_name + '_mygraph_%s_%sExpr_top%d.html' % (gene, role, args.top_edge_count)
+            nt_expr.save_graph(out_expr)
+            print('LR expression graph saved: ' + out_expr)
     ########################################################################
     # convert it to dot file to be able to convert it to pdf or svg format for inserting into the paper
     write_dot(g, output_name + "_test_interactive_top"+ str(args.top_edge_count) +".dot")
