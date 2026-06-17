@@ -112,8 +112,10 @@ if __name__ == "__main__":
     parser.add_argument( '--keep_geneset_file', type=str, default="", help='Set to the CSV file having target LR pairs under column geneset (and label as optional column)')
     parser.add_argument( '--remove_genes', type=str, default="", help='Remove LR having these genes from the lr pair list. ' \
                         'This helps if there is one/few highly dominating pair (but not novel) that bias the analysis.')
-    
+    parser.add_argument( '--list_only', type=int, default=-1, help='Generate CCC list only in CSV and HTML format. \
+                        Ignore the other output formats.')
     parser.add_argument( '--suffix', type=str, default="", help='Add additional suffix.')
+    
 
     
     args = parser.parse_args()
@@ -380,7 +382,7 @@ if __name__ == "__main__":
     unique_component_count = max(len(component_list.keys()), id_label)
 
 
-    ##################################### Altair Plot ##################################################################
+    
     ## dictionary of those spots who are participating in CCC ##
     active_spot = defaultdict(list)
     for record_idx in range (1, len(csv_record_final)-1): #last entry is a dummy for histograms, so ignore it.
@@ -402,10 +404,12 @@ if __name__ == "__main__":
         active_spot[j].append([pathology_label, component_label, X, Y, opacity])
         ''''''
         
-    ######### color the spots in the plot with opacity = attention score #################
+    
     if len(active_spot)==0:
         print('No active spots found; skipping Altair component plot and all downstream visualizations, exiting script.')
         exit(0)
+
+    ######### color the spots in the plot with opacity = attention score #################
     opacity_list = []
     for i in active_spot:
         sum_opacity = []
@@ -419,6 +423,97 @@ if __name__ == "__main__":
     min_opacity = np.min(opacity_list)
     max_opacity = np.max(opacity_list)
 
+    ###################################  Histogram plotting #################################################################################
+
+    df = pd.DataFrame(csv_record_final)
+    df.to_csv(temp_file_name+'temp_csv.csv', index=False, header=False)
+    df = pd.read_csv(temp_file_name+'temp_csv.csv', sep=",")
+    os.remove(temp_file_name+'temp_csv.csv') # delete the intermediate file
+
+    print('len of loaded csv for histogram generation is %d'%len(df))
+    df = preprocessDf(df)
+    p = plot(df)
+    outPath = output_name +'_histogram_byFrequency_plot_top'+str(args.top_edge_count) + args.suffix  +'.html'
+    p.save(outPath)	
+    print('Histogram plot (count) generation done: '+ outPath)
+    
+    p = plot_percentage(df)
+    outPath = output_name +'_histogram_byFrequency_plot_abundance_top'+str(args.top_edge_count)  + args.suffix +'.html'
+    p.save(outPath)	
+    print('Histogram plot (percentage) generation done: '+ outPath)
+    
+    ################################# Save the histograms in a table format ########################################
+
+    hist_count = defaultdict(list)
+    for i in range (1, len(csv_record_final)-1):    
+        hist_count[csv_record_final[i][2]+'-'+csv_record_final[i][3]].append(1)
+
+    lr_pair_count = []
+    for lr_pair in hist_count.keys():
+        hist_count[lr_pair] = np.sum(hist_count[lr_pair])
+        lr_pair_count.append([lr_pair, hist_count[lr_pair]])
+
+    # sort it in high to low order
+    lr_pair_count = sorted(lr_pair_count, key = lambda x: x[1], reverse=True)
+  
+    # now plot the histograms where X axis will show the name or LR pair and Y axis will show the score.
+    data_list=dict()
+    data_list['X']=[]
+    data_list['Y']=[] 
+    for i in range (0, len(lr_pair_count)):
+        data_list['X'].append(lr_pair_count[i][0])
+        data_list['Y'].append(lr_pair_count[i][1])
+        
+    data_list_pd = pd.DataFrame({
+        'Ligand-Receptor Pairs': data_list['X'],
+        'Total Count': data_list['Y']
+    })
+
+    data_list_pd['Percentage'] = (data_list_pd['Total Count'] / data_list_pd['Total Count'].sum()) * 100
+    data_list_pd['Percentage'] = data_list_pd['Percentage'].round(2)
+
+
+
+    data_list_pd.to_csv(output_name +'_histogram_byFrequency_table_top'+str(args.top_edge_count) + args.suffix +'.csv', index=False)
+    print(output_name +'_histogram_byFrequency_table_top'+str(args.top_edge_count) + args.suffix +'.csv')    
+
+  
+    ###############################################################################################################  
+    if args.sort_by_attentionScore==1:
+        lr_score = defaultdict(list)
+        for i in range (1, len(csv_record_final)-1):    
+            lr_score[csv_record_final[i][2]+'-'+csv_record_final[i][3]].append(csv_record_final[i][8])
+        for key in lr_score.keys():
+            lr_score[key]=np.sum(lr_score[key])
+
+        # now plot the histograms where X axis will show the name or LR pair and Y axis will show the score.
+        data_list=dict()
+        data_list['X']=[]
+        data_list['Y']=[] 
+        for key in lr_score.keys(): #len(two_hop_pattern_distribution)):
+            data_list['X'].append(key)
+            data_list['Y'].append(lr_score[key])
+            
+        data_list_pd = pd.DataFrame({
+            'Ligand-Receptor Pairs': data_list['X'],
+            'Total Attention Score': data_list['Y']
+        })
+    
+        chart = alt.Chart(data_list_pd).mark_bar().encode(
+            x=alt.X("Ligand-Receptor Pairs:N", axis=alt.Axis(labelAngle=45), sort='-y'),
+            y='Total Attention Score'
+        )
+    
+        chart.save(output_name +'_histogram_byAttention_plot'+ args.suffix +'.html')
+        print('Saved at '+ output_name + '_histogram_byAttention_plot'+ args.suffix +'.html')  
+
+        data_list_pd.to_csv(output_name +'_histogram_byAttention_table_top'+str(args.top_edge_count) + args.suffix +'.csv', index=False)
+        print('Saved at '+ output_name +'_histogram_byAttention_table_top'+str(args.top_edge_count) + args.suffix +'.csv')  
+
+    if args.list_only == 1:
+        print('Skipping other output.')
+        exit(0) 
+    ##################################### Altair Plot ##################################################################
     #### making dictionary for converting to pandas dataframe to draw altair plot ###########
     data_list=dict()
     data_list['pathology_label']=[]
@@ -514,92 +609,6 @@ if __name__ == "__main__":
     chart.save(output_name +'_component_plot_'+str(args.top_edge_count) + args.suffix +'.html')
     print('Altair plot generation done: '+output_name +'_component_plot_'+str(args.top_edge_count) + args.suffix +'.html')
 
-    ###################################  Histogram plotting #################################################################################
-
-    df = pd.DataFrame(csv_record_final)
-    df.to_csv(temp_file_name+'temp_csv.csv', index=False, header=False)
-    df = pd.read_csv(temp_file_name+'temp_csv.csv', sep=",")
-    os.remove(temp_file_name+'temp_csv.csv') # delete the intermediate file
-
-    print('len of loaded csv for histogram generation is %d'%len(df))
-    df = preprocessDf(df)
-    p = plot(df)
-    outPath = output_name +'_histogram_byFrequency_plot_top'+str(args.top_edge_count) + args.suffix  +'.html'
-    p.save(outPath)	
-    print('Histogram plot (count) generation done: '+ outPath)
-    
-    p = plot_percentage(df)
-    outPath = output_name +'_histogram_byFrequency_plot_abundance_top'+str(args.top_edge_count)  + args.suffix +'.html'
-    p.save(outPath)	
-    print('Histogram plot (percentage) generation done: '+ outPath)
-    
-    ################################# Save the histograms in a table format ########################################
-
-    hist_count = defaultdict(list)
-    for i in range (1, len(csv_record_final)-1):    
-        hist_count[csv_record_final[i][2]+'-'+csv_record_final[i][3]].append(1)
-
-    lr_pair_count = []
-    for lr_pair in hist_count.keys():
-        hist_count[lr_pair] = np.sum(hist_count[lr_pair])
-        lr_pair_count.append([lr_pair, hist_count[lr_pair]])
-
-    # sort it in high to low order
-    lr_pair_count = sorted(lr_pair_count, key = lambda x: x[1], reverse=True)
-  
-    # now plot the histograms where X axis will show the name or LR pair and Y axis will show the score.
-    data_list=dict()
-    data_list['X']=[]
-    data_list['Y']=[] 
-    for i in range (0, len(lr_pair_count)):
-        data_list['X'].append(lr_pair_count[i][0])
-        data_list['Y'].append(lr_pair_count[i][1])
-        
-    data_list_pd = pd.DataFrame({
-        'Ligand-Receptor Pairs': data_list['X'],
-        'Total Count': data_list['Y']
-    })
-
-    data_list_pd['Percentage'] = (data_list_pd['Total Count'] / data_list_pd['Total Count'].sum()) * 100
-    data_list_pd['Percentage'] = data_list_pd['Percentage'].round(2)
-
-
-
-    data_list_pd.to_csv(output_name +'_histogram_byFrequency_table_top'+str(args.top_edge_count) + args.suffix +'.csv', index=False)
-    print(output_name +'_histogram_byFrequency_table_top'+str(args.top_edge_count) + args.suffix +'.csv')    
-
-  
-    ###############################################################################################################  
-    if args.sort_by_attentionScore==1:
-        lr_score = defaultdict(list)
-        for i in range (1, len(csv_record_final)-1):    
-            lr_score[csv_record_final[i][2]+'-'+csv_record_final[i][3]].append(csv_record_final[i][8])
-        for key in lr_score.keys():
-            lr_score[key]=np.sum(lr_score[key])
-
-        # now plot the histograms where X axis will show the name or LR pair and Y axis will show the score.
-        data_list=dict()
-        data_list['X']=[]
-        data_list['Y']=[] 
-        for key in lr_score.keys(): #len(two_hop_pattern_distribution)):
-            data_list['X'].append(key)
-            data_list['Y'].append(lr_score[key])
-            
-        data_list_pd = pd.DataFrame({
-            'Ligand-Receptor Pairs': data_list['X'],
-            'Total Attention Score': data_list['Y']
-        })
-    
-        chart = alt.Chart(data_list_pd).mark_bar().encode(
-            x=alt.X("Ligand-Receptor Pairs:N", axis=alt.Axis(labelAngle=45), sort='-y'),
-            y='Total Attention Score'
-        )
-    
-        chart.save(output_name +'_histogram_byAttention_plot'+ args.suffix +'.html')
-        print('Saved at '+ output_name + '_histogram_byAttention_plot'+ args.suffix +'.html')  
-
-        data_list_pd.to_csv(output_name +'_histogram_byAttention_table_top'+str(args.top_edge_count) + args.suffix +'.csv', index=False)
-        print('Saved at '+ output_name +'_histogram_byAttention_table_top'+str(args.top_edge_count) + args.suffix +'.csv')  
 
     ############################  Network/edge graph plot ######################
 
