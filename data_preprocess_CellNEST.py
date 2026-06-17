@@ -19,6 +19,7 @@ import json
 import gc
 from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics.pairwise import euclidean_distances
+import matplotlib.pyplot as plt
 print('user input reading')
  
 if __name__ == "__main__":
@@ -41,16 +42,28 @@ if __name__ == "__main__":
     parser.add_argument( '--block_autocrine', type=int, default=0 , help='Set to 1 if you want to ignore autocrine signals.') 
     parser.add_argument( '--block_juxtacrine', type=int, default=0, help='Set to 1 if you want to ignore juxtacrine signals.')     
     parser.add_argument( '--database_path', type=str, default='database/CellNEST_database.csv' , help='Provide your desired ligand-receptor database path here. Default database is a combination of CellChat and NicheNet database. It should have Ligand and Receptor columns') 
+    
     parser.add_argument( '--set_ROI', type=int, default=0, help='Set to 1 if you want to use ROI')
     parser.add_argument( '--x_min', type=int, default=-1, help='Set if you want to use ROI')
     parser.add_argument( '--x_max', type=int, default=-1, help='Set if you want to use ROI')
     parser.add_argument( '--y_min', type=int, default=-1, help='Set if you want to use ROI')
     parser.add_argument( '--y_max', type=int, default=-1, help='Set if you want to use ROI')
+
+    parser.add_argument( '--keep_target_genes', type=int, default=0, help='Set to 1 if you want to keep target genes.')
+    parser.add_argument( '--target_gene_threshold', type=float, default=80, help='Set to desired gene threshold for target genes.')
+    parser.add_argument( '--target_genes_file', type=str, default="", help='Set to the CSV file having target genes under column geneset')
+    parser.add_argument( '--target_genes_list', type=str, default="", help='String of target gene names to keep, separated by comma.')
+
     parser.add_argument( '--skip_normalize', type=int, default=0, help='Set to 1 if you have QC data, so want to skip normalization')
+    
     parser.add_argument( '--use_celltype', type=int, default=0, help='Set to 1 to use cell types as node features. Provide the --celltype_path as well.')
     parser.add_argument( '--celltype_path', type=str, default='database/celltype_annotation.csv', 
                         help='If you want to use cell types as node features then provide the annotation (type/state/etc.) csv file path. ' \
                         'It should have two columns: Barcode and Type.')
+    
+    parser.add_argument( '--plot_only', type=int, default=-1, help='Set to 1 if you just want to plot spatial data')
+
+
     args = parser.parse_args()
     
     if args.data_to == 'input_graph/':
@@ -63,6 +76,23 @@ if __name__ == "__main__":
     if not os.path.exists(args.metadata_to):
         os.makedirs(args.metadata_to)
         
+
+    if args.keep_target_genes == 1:
+        if args.target_genes_list != "":
+            keep_gene_set = target_genes_list.split(',')
+        elif args.target_genes_file != "":
+            target_gene_file = pd.read_csv(args.target_genes_file)
+            keep_gene_set = list(target_gene_file['geneset'])
+
+        else:
+            print('Please provide the target gene list using --target_genes_list or --target_genes_file parameters.')
+            exit(0)
+        
+        keep_gene_set = list(set(keep_gene_set))
+        print('Target gene set.')
+    else:
+        keep_gene_set = []
+
     ####### get the gene id, cell barcode, cell coordinates ######
     print('Input data reading')
     if args.tissue_position_file == 'None': # Data is available in Space Ranger output format
@@ -97,6 +127,16 @@ if __name__ == "__main__":
         elif args.data_type == 'anndata':
             adata_h5 = sc.read_h5ad(args.data_from)
             print('input data read done')
+
+            if args.plot_only == 1:
+                coordinates = np.array(adata_h5.obsm['spatial'])
+                ## spatial image
+                plt.clf()
+                plt.scatter(coordinates[:,0], coordinates[:,1])
+                plt.savefig(args.data_name+'_spatialPlot.png', dpi=300, bbox_inches='tight')
+                print('Plot saved:'+args.data_name+'_spatialPlot.png')
+                exit(0) 
+
             gene_count_before = len(list(adata_h5.var_names))    
             sc.pp.filter_genes(adata_h5, min_cells=args.filter_min_cell)
             gene_count_after = len(list(adata_h5.var_names) )  
@@ -173,7 +213,12 @@ if __name__ == "__main__":
             coordinates[i,1] = barcode_vs_xy[cell_barcode[i]][1]
         
     
-    #print(euclidean_distances(coordinates[0:1],coordinates[2:3]))
+    ## spatial image
+    plt.clf()
+    plt.scatter(coordinates[:,0], coordinates[:,1])
+    plt.savefig(args.data_name+'_spatialPlot.png', dpi=300, bbox_inches='tight')
+    print('Plot saved:'+args.data_name+'_spatialPlot.png')
+
     ##################### make metadata: barcode_info ###################################
     i=0
     barcode_info=[]
@@ -236,35 +281,6 @@ if __name__ == "__main__":
             weightdict_i_to_j[neigh_cell_idx][cell_idx] = flipped_distance_neigh_cell
 
 
-    # assign weight to the neighborhood relations based on neighborhood distance 
-    """
-    dist_X = np.zeros((distance_matrix.shape[0], distance_matrix.shape[1]))
-    for j in range(0, distance_matrix.shape[1]): # look at all the incoming edges to node 'j'
-        max_value=np.max(distance_matrix[:,j]) # max distance of node 'j' to all it's neighbors (incoming)
-        min_value=np.min(distance_matrix[:,j]) # min distance of node 'j' to all it's neighbors (incoming)
-        for i in range(distance_matrix.shape[0]):
-            dist_X[i,j] = 1-(distance_matrix[i,j]-min_value)/(max_value-min_value) # scale the distance of node 'j' to all it's neighbors (incoming) and flip it so that nearest one will have maximum weight.
-            	
-        if args.distance_measure=='knn':
-            list_indx = list(np.argsort(dist_X[:,j]))
-            k_higher = list_indx[len(list_indx)-args.k:len(list_indx)]
-            for i in range(0, distance_matrix.shape[0]):
-                if i not in k_higher:
-                    dist_X[i,j] = 0 #-1
-        else:
-            for i in range(0, distance_matrix.shape[0]):
-                if distance_matrix[i,j] > args.neighborhood_threshold: #i not in k_higher:
-                    dist_X[i,j] = 0 # no ccc happening outside threshold distance
-    
-
-
-
-        #list_indx = list(np.argsort(dist_X[:,j]))
-        #k_higher = list_indx[len(list_indx)-k_nn:len(list_indx)]
-        for i in range(0, distance_matrix.shape[0]):
-            if distance_matrix[i,j] > args.neighborhood_threshold: #i not in k_higher:
-                dist_X[i,j] = 0 # no ccc happening outside threshold distance
-    """      
 
 
     #### automatically set the args.juxtacrine_distance ############
@@ -366,6 +382,28 @@ if __name__ == "__main__":
         cell_percentile.append(active_cutoff)     
 
     print('set threshold gene percentile done')
+
+    if args.keep_target_genes == 1:
+        # Set threshold gene percentile for target gene set
+        cell_percentile_80th = []
+        for i in range (0, cell_vs_gene.shape[0]):
+            y = sorted(cell_vs_gene[i]) # sort each row/cell in ascending order of gene expressions
+            ## inter ##
+            active_cutoff = np.percentile(y, args.target_gene_threshold)
+            if active_cutoff == min(cell_vs_gene[i][:]):
+                times = 1
+                while active_cutoff == min(cell_vs_gene[i][:]):
+                    new_threshold = args.threshold_gene_exp + 2 * times                    
+                    if new_threshold >= 100:
+                        active_cutoff = max(cell_vs_gene[i][:])  
+                        break
+                    active_cutoff = np.percentile(y, new_threshold)
+                    times = times + 1 
+
+            cell_percentile_80th.append(active_cutoff)     
+
+        print('set threshold gene percentile for target gene done')
+
     ##############################################################################
     # some preprocessing before making the input graph
     count_total_edges = 0
@@ -378,35 +416,55 @@ if __name__ == "__main__":
     for g in range(start_index, end_index): 
         gene = ligand_list[g]
         for i in weightdict_i_to_j:
+
+
             if cell_vs_gene[i][gene_index[gene]] < cell_percentile[i]:
-                continue            
+                # before skipping, check again if it is a target gene
+                if gene in keep_gene_set:
+                    if cell_vs_gene[i][gene_index[gene]] < cell_percentile_80th[i]:
+                        continue
+                
+                else:
+                    continue
+
+
             for j in weightdict_i_to_j[i]: # receptor
                 if args.block_autocrine == 1 and i==j:
                     continue
                 for gene_rec in ligand_dict_dataset[gene]:
-                    if cell_vs_gene[j][gene_index[gene_rec]] >= cell_percentile[j]: # or cell_vs_gene[i][gene_index[gene]] >= cell_percentile[i][4] :#gene_list_percentile[gene_rec][1]: #global_percentile: #
-                        if (gene_rec in cell_cell_contact) and (args.block_juxtacrine==1 or euclidean_distances(coordinates[i:i+1],coordinates[j:j+1]) > args.juxtacrine_distance):
+                    
+                    if cell_vs_gene[j][gene_index[gene_rec]] < cell_percentile[j]:
+                        # before skipping, check again if it is a target gene
+                        if gene_rec in keep_gene_set:
+                            if cell_vs_gene[j][gene_index[gene_rec]] < cell_percentile_80th[j]:
+                                continue
+                        
+                        else:
                             continue
-    
-                        communication_score = cell_vs_gene[i][gene_index[gene]] * cell_vs_gene[j][gene_index[gene_rec]]
-                        relation_id = l_r_pair[gene][gene_rec]
-    
-                        if communication_score<=0:
-                            print('zero valued ccc score found. Might be a potential ERROR!! ')
-                            continue	
-                            
-                        #cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
-                        if i in cells_ligand_vs_receptor:
-                            if j in cells_ligand_vs_receptor[i]:
-                                cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
-                            else:
-                                cells_ligand_vs_receptor[i][j] = []
-                                cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
+
+
+                    if (gene_rec in cell_cell_contact) and (args.block_juxtacrine==1 or euclidean_distances(coordinates[i:i+1],coordinates[j:j+1]) > args.juxtacrine_distance):
+                        continue
+
+                    communication_score = cell_vs_gene[i][gene_index[gene]] * cell_vs_gene[j][gene_index[gene_rec]]
+                    relation_id = l_r_pair[gene][gene_rec]
+
+                    if communication_score<=0:
+                        print('zero valued ccc score found. Might be a potential ERROR!! ')
+                        continue	
+                        
+                    #cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
+                    if i in cells_ligand_vs_receptor:
+                        if j in cells_ligand_vs_receptor[i]:
+                            cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
                         else:
                             cells_ligand_vs_receptor[i][j] = []
                             cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
+                    else:
+                        cells_ligand_vs_receptor[i][j] = []
+                        cells_ligand_vs_receptor[i][j].append([gene, gene_rec, communication_score, relation_id])
 
-                        count_total_edges = count_total_edges + 1
+                    count_total_edges = count_total_edges + 1
                         
         print('%d/%d ligand genes processed'%(g+1, len(ligand_list)), end='\r')
     
@@ -442,16 +500,22 @@ if __name__ == "__main__":
     print('preprocess done.')
     print('writing data ...')
 
+    
     ################## input graph #################################################
     with gzip.open(args.data_to + args.data_name + '_adjacency_records', 'wb') as fp:  
         pickle.dump([row_col, edge_weight, lig_rec, total_num_cell], fp)
 
+    print('Saved: '+ args.data_to + args.data_name + '_adjacency_records')
     ################# metadata #####################################################
     with gzip.open(args.metadata_to + args.data_name +'_self_loop_record', 'wb') as fp: 
         pickle.dump(self_loop_found, fp)
 
+    print("Saved: " + args.metadata_to + args.data_name +'_self_loop_record')
+
     with gzip.open(args.metadata_to + args.data_name +'_barcode_info', 'wb') as fp:  
         pickle.dump(barcode_info, fp)
+
+    print("Saved: " + args.metadata_to + args.data_name +'_barcode_info')
     
     ################## required for the CellNEST interactive version ###################
     df = pd.DataFrame(gene_ids)

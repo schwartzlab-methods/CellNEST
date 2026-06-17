@@ -45,6 +45,7 @@ if __name__ == "__main__":
     parser.add_argument( '--top_percent', type=int, default=20, help='Top N percentage communications to pick')
     parser.add_argument( '--output_all', type=int, default=1, help='Set it to 1 to output all communications')
     parser.add_argument( '--integrate_layers', type=int, default=1, help='Set it to 1 to output strictly top percent number of edges.')
+    parser.add_argument( '--attention_threshold', type=float, default=-1, help='Set it to desired attention score to output.')
     args = parser.parse_args()
 
     args.metadata_from = args.metadata_from + args.data_name + '/'
@@ -496,6 +497,22 @@ if __name__ == "__main__":
         df.to_csv(args.output_path + args.model_name+'_allCCC.csv', index=False, header=False)
         print(args.output_path + args.model_name+'_allCCC.csv')
 
+
+    if args.attention_threshold != -1:
+        # take top ranked edges based on hard threshold 
+        csv_record[1:] = sorted(csv_record[1:], key = lambda x: x[4]) # small rank being high attention
+        ##### save the file for downstream analysis ########        
+        # Extract header and data separately
+        df = pd.DataFrame(csv_record[1:], columns=csv_record[0])
+        #df = pd.DataFrame(csv_record) # output 4
+        print(df)
+        # keep only args.attention_threshold pairs
+        df = df[df['attention_score'] >= args.attention_threshold]
+        df.to_csv(args.output_path + args.model_name+'_thresholded' + '.csv', index=False)
+        print(args.output_path + args.model_name+'_thresholded' + '.csv')
+
+
+
     if args.integrate_layers == 1:
         # take top 20% highly ranked edges 
         csv_record[1:] = sorted(csv_record[1:], key = lambda x: x[4]) # small rank being high attention
@@ -504,3 +521,5 @@ if __name__ == "__main__":
         df = pd.DataFrame(csv_record) # output 4
         df.to_csv(args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv', index=False, header=False)
         print(args.output_path + args.model_name+'_top' + str(args.top_percent) + 'percent.csv')
+
+    

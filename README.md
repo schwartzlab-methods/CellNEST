@@ -30,6 +30,8 @@ This is to be executed once only when CellNEST is run for the first time. This s
 
 2. CellNEST needs raw gene count data as input. However, CellNEST pipeline does not perform any QC for cell filtering. So please run the QC pipeline beforehand if it deems necessary. But do not normalize or log tranform the gene count matrix as CellNEST has its own pipeline for doing that. However, if you only have already normalized/transformed data, and don't have access to raw counts for gene expression matrix, then you must use --skip_normalize=1 to avoid default Quantile transformation. Otherwise CellNEST may provide erroneous results.
 
+3. If you are running QC beforehand, please be 'permissive' instead of over correcting the data. Some noise is fine, CellNEST can handle it. SKIP 'keep variable genes only' step. 
+
 4. If you are working with single-cell resolution data, use additional parameter --distance_measure='knn' [[here](vignette/split_graph_option.md)]. To ignore autocrine signals, you may set --block_autocrine=1.   
 
 
