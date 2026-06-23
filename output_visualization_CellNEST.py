@@ -100,6 +100,9 @@ if __name__ == "__main__":
     parser.add_argument( '--filter', type=int, default=0, help='Set --filter=-1 if you want to filter the CCC')
     parser.add_argument( '--filter_by_ligand_receptor', type=str, default='', help='Set ligand-receptor pair, e.g., --filter_by_ligand_receptor="CCL19-CCR7" if you want to filter the CCC by LR pair')
     parser.add_argument( '--filter_by_annotation', type=str, default='', help='Set cell or spot type, e.g., --filter_by_annotation="T-cell" if you want to filter the CCC')
+    parser.add_argument( '--sender_only', type=int, default=-1, help='For filter by annotation, consider only sender cells')
+    parser.add_argument( '--rcvr_only', type=int, default=-1, help='For filter by annotation, consider only receiver cells')
+    parser.add_argument( '--both', type=int, default=-1, help='For filter by annotation, consider both of sender and receiver cells')
     parser.add_argument( '--filter_by_component', type=int, default=-1, help='Set component id, e.g., --filter_by_component=9 if you want to filter by component id')
     parser.add_argument( '--sort_by_attentionScore', type=int, default=-1, help='Set --sort_by_attentionScore=1 if you want to sort the histograms of CCC by attention score')
     parser.add_argument( '--point_size', type=float, default=10, help='Set size of points for component plot')   
@@ -323,19 +326,26 @@ if __name__ == "__main__":
         #region_of_interest = [...] 
         csv_record_final_temp = []
         csv_record_final_temp.append(csv_record_final[0])
-        component_dictionary_dummy = dict()
+        #component_dictionary_dummy = dict()
         for record_idx in range (1, len(csv_record_final)-1): #last entry is a dummy for histograms, so ignore it.
             if args.filter_by_component!=-1:
                 if csv_record_final[record_idx][5] == int(args.filter_by_component):
                     csv_record_final_temp.append(csv_record_final[record_idx])                
             elif args.filter_by_annotation!='': 
-                if barcode_type[str(csv_record_final[record_idx][0])] == args.filter_by_annotation or barcode_type[str(csv_record_final[record_idx][1])] == args.filter_by_annotation: # if from_node == type and to_node == type
+                if args.sender_only == 1 and barcode_type[str(csv_record_final[record_idx][0])] == args.filter_by_annotation:
+                    csv_record_final_temp.append(csv_record_final[record_idx]) 
+                elif args.rcvr_only == 1 and barcode_type[str(csv_record_final[record_idx][1])] == args.filter_by_annotation:
+                    csv_record_final_temp.append(csv_record_final[record_idx])
+                elif args.both == 1 and (barcode_type[str(csv_record_final[record_idx][0])] == args.filter_by_annotation and barcode_type[str(csv_record_final[record_idx][1])] == args.filter_by_annotation):
+                    csv_record_final_temp.append(csv_record_final[record_idx])
+                # Anyone of them
+                elif barcode_type[str(csv_record_final[record_idx][0])] == args.filter_by_annotation or barcode_type[str(csv_record_final[record_idx][1])] == args.filter_by_annotation: # if from_node == type and to_node == type
                     #if 'triad_forming' in barcode_type[str(csv_record_final[record_idx][0])] and 'triad_forming' in barcode_type[str(csv_record_final[record_idx][1])]:
                     csv_record_final_temp.append(csv_record_final[record_idx])   
 
 
-                if csv_record_final[record_idx][5] not in component_dictionary_dummy:
-                    component_dictionary_dummy[csv_record_final[record_idx][5]] = csv_record_final[record_idx]    
+                #if csv_record_final[record_idx][5] not in component_dictionary_dummy:
+                #    component_dictionary_dummy[csv_record_final[record_idx][5]] = csv_record_final[record_idx]    
 
             elif args.annotation_group != '': 
                 if barcode_type[str(csv_record_final[record_idx][0])] in args.filter_by_annotation and barcode_type[str(csv_record_final[record_idx][1])] in args.filter_by_annotation: # if from_node == ty>
@@ -343,8 +353,8 @@ if __name__ == "__main__":
                     csv_record_final_temp.append(csv_record_final[record_idx])   
 
 
-                if csv_record_final[record_idx][5] not in component_dictionary_dummy:
-                    component_dictionary_dummy[csv_record_final[record_idx][5]] = csv_record_final[record_idx]
+                #if csv_record_final[record_idx][5] not in component_dictionary_dummy:
+                #    component_dictionary_dummy[csv_record_final[record_idx][5]] = csv_record_final[record_idx]
             
             elif args.filter_by_ligand_receptor!='':
                 ligand = (args.filter_by_ligand_receptor).split('-')[0]
