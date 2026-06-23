@@ -412,7 +412,7 @@ if __name__ == "__main__":
         Y = -barcode_info[j][2]
         opacity = np.float64(record[8])   
         active_spot[j].append([pathology_label, component_label, X, Y, opacity])
-        ''''''
+        
         
     
     if len(active_spot)==0:
@@ -693,12 +693,59 @@ if __name__ == "__main__":
         # load quantile-normalized expression matrix (spots x genes)
         with gzip.open(args.data_from + args.data_name + '_cell_vs_gene_quantile_transformed', 'rb') as fp:
             cell_vs_gene_qt = pickle.load(fp)
+
         # load gene ids corresponding to columns of cell_vs_gene_qt
         gene_ids_qt = pd.read_csv(
             args.metadata_from + 'gene_ids_' + args.data_name + '.csv', header=None
         )[0].tolist()
         # map gene name to column index in cell_vs_gene_qt
         gene_index_qt = {g: i for i, g in enumerate(gene_ids_qt)}
+
+        ######### Plot just heatmap ###################
+        target_gene = ligand
+        target_gene_id = gene_index_qt[target_gene]
+        data_list=dict()
+        data_list['X']=[]
+        data_list['Y']=[]   
+        data_list['gene_expression']=[] 
+        for i in range (0, len(barcode_info)):
+            data_list['X'].append(barcode_info[i][1])
+            data_list['Y'].append(-barcode_info[i][2])
+            data_list['gene_expression'].append(cell_vs_gene_qt[i, target_gene_id])
+        
+        source= pd.DataFrame(data_list)
+        chart = alt.Chart(source).mark_point(filled=True).encode(
+            alt.X('X', scale=alt.Scale(zero=False)),
+            alt.Y('Y', scale=alt.Scale(zero=False)),
+            color=alt.Color('gene_expression:Q', scale=alt.Scale(scheme='magma'))
+        )
+        chart.save(output_name +'_heatmap_top'+ str(args.top_edge_count) + args.suffix + '_' + target_gene + '.html')
+        print('LR expression graph saved: ' + output_name +'_heatmap_top'+ str(args.top_edge_count) + args.suffix + '_' + target_gene + '.html')
+
+        target_gene = receptor
+        target_gene_id = gene_index_qt[target_gene]
+        data_list=dict()
+        data_list['X']=[]
+        data_list['Y']=[]   
+        data_list['gene_expression']=[] 
+        for i in range (0, len(barcode_info)):
+            data_list['X'].append(barcode_info[i][1])
+            data_list['Y'].append(-barcode_info[i][2])
+            data_list['gene_expression'].append(cell_vs_gene_qt[i, target_gene_id])
+        
+        source= pd.DataFrame(data_list)
+        # colour map: magma reversed (low expression: dark purple; high expression: yellow)
+        chart = alt.Chart(source).mark_point(filled=True).encode(
+            alt.X('X', scale=alt.Scale(zero=False)),
+            alt.Y('Y', scale=alt.Scale(zero=False)),
+            color=alt.Color('gene_expression:Q', scale=alt.Scale(scheme='magma'))
+        )
+        
+        chart.save(output_name +'_heatmap_top'+ str(args.top_edge_count) + args.suffix + '_' + target_gene + '.html')
+        print('LR expression graph saved: ' + output_name +'_heatmap_top'+ str(args.top_edge_count) + args.suffix + '_' + target_gene + '.html')
+
+        ###############################################
+        '''
         # colour map: magma reversed (low expression: dark purple; high expression: yellow)
         cmap = plt.get_cmap('magma_r')
         # collect integer spot indices of senders (from_id) and receivers (to_id)
@@ -732,6 +779,8 @@ if __name__ == "__main__":
             out_expr = output_name + '_mygraph_%s_%sExpr_top%d.html' % (gene, role, args.top_edge_count)
             nt_expr.save_graph(out_expr)
             print('LR expression graph saved: ' + out_expr)
+        '''
+
     ########################################################################
     # convert it to dot file to be able to convert it to pdf or svg format for inserting into the paper
     write_dot(g, output_name + "_test_interactive_top"+ str(args.top_edge_count) +".dot")
